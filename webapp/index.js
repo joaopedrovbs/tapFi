@@ -53,7 +53,6 @@ async.mapSeries(setupSteps, (file, next) => require(file)(app, next), err => {
   console.log(TAG, chalk.green('launched'))
 
   // Launch main window
-  console.log(app.controllers)
   app.controllers.MainWindow.launch()
 })
 
