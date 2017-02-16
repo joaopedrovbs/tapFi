@@ -1,0 +1,1 @@
+# The list for all the parts used in the prototype and their links can be found [here](https://docs.google.com/spreadsheets/d/1pxn552UrJLPFjxMJo8Y3OLqV407wsjz8_O9QdrBkuIY/edit?usp=sharing).
