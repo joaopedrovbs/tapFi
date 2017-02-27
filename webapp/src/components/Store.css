@@ -1,0 +1,74 @@
+.Store {
+  width: 500px;
+  height: 100%;
+  flex-grow: 1;
+
+  margin: 0px;
+ 
+  display: flex;
+  flex-direction: column;
+}
+
+.Store > .header {
+  height: 60px;
+  
+  z-index: 2;
+  display: flex;
+  flex-shrink: 0;
+
+  background-color: #607D8B !important;
+  color: #FFF !important;
+}
+
+.Store > .header > .title {
+  flex-grow: 1;
+
+  font-size: 18px;
+  text-align: center;
+  line-height: 60px;
+}
+
+.Store > .grid {
+  width: 100%;
+  height: 100%;
+
+  display: flex;
+  flex-flow: row wrap;
+  align-items: flex-start;
+  align-content: flex-start;
+
+  /*display: flex;*/
+  /*flex-grow: row;*/
+  /*flex-wrap: wrap;*/
+  /*flex-flow: row wrap;*/
+  /*align-items: center;*/
+  justify-content: space-around;
+  /*background-color: rgba(0, 0, 0, 0.5);*/
+}
+
+.Store > .scanner {
+  background-color: #ECEFF1 !important;
+}
+
+.Store > .scanner > .video {
+  width: 500px;
+  height: 100px;
+  overflow: hidden;
+  position: relative;
+  margin: 20px;
+}
+
+.Store > .scanner > .video > .line {
+  position: absolute;
+  top: 50%;
+  width: 100%;
+  height: 3px;
+  background-color: #FF2255; 
+
+  box-shadow: 0 0 15px 0 #FF2255;
+}
+
+.Store > .scanner > .video > video{
+  position: relative;
+  top: -100px;
+}

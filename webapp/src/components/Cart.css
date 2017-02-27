@@ -1,0 +1,62 @@
+.Cart {
+  min-width: 400px;
+
+  display: flex;
+  flex-direction: column;
+}
+
+.Cart > .header {
+  height: 60px;
+  
+  z-index: 2;
+  display: flex;
+  flex-shrink: 0;
+}
+
+.Cart > .header > .title {
+  flex-grow: 1;
+
+  font-size: 18px;
+  text-align: center;
+  line-height: 60px;
+
+  background-color: #64B5F6;
+  color: #FFF;
+}
+
+.Cart > .header > .icon {
+  width: 60px;
+
+  height: 60px;
+  color: #F0F0F0;
+  text-align: center;
+  line-height: 70px;
+  background-color: #2196F3;
+}
+
+.Cart > .StoreItems {
+  display: block;
+
+  flex-grow: 1;
+
+  overflow-y: scroll;
+  overflow-x: hidden;
+  padding-top: 16px;
+}
+
+.Cart > .emptyCart {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+
+  flex-grow: 1;
+
+  background-color: #FAFAFA;
+}
+
+.Cart > .emptyCart > div{
+  text-align: center;
+
+  color: rgba(0, 0, 0, 0.08);
+  font-size: 48px;
+}

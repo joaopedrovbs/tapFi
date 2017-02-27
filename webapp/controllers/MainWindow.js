@@ -22,11 +22,18 @@ exports.launch = function (){
   })
 
   // and load the index.html of the app.
-  mainWindow.loadURL(`file://${__dirname}/../public/index.html`)
+  let targetUrl = `file://${__dirname}/../build/index.html`
+  
 
   // Open the DevTools.
-  if(app.helpers.isDev())
+  if(app.helpers.isDev) {
+    // Set target to React
+    targetUrl = 'http://localhost:3000'
     mainWindow.webContents.openDevTools({detached: true})
+  }
+
+  // Load from specified url
+  mainWindow.loadURL(targetUrl)
 
   // Emitted when the window is closed.
   mainWindow.on('closed', function () {
@@ -37,10 +44,24 @@ exports.launch = function (){
   console.log(TAG, chalk.cyan('Launching mainWindow'))
 }
 
+// Quit when all windows are closed.
+electron.app.on('window-all-closed', function () {
+  electron.app.quit()
+});
+
+
 exports.notify = function notify(title, message, stick) {
   if (!mainWindow) {
     return;
   }
 
   mainWindow.webContents.send('notify', title, message, stick);
+}
+
+exports.sendBarcode = function (barcode) {
+  if (!mainWindow) {
+    return;
+  }
+
+  mainWindow.webContents.send('barcode', barcode);
 }

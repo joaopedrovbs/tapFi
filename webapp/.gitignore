@@ -18,3 +18,17 @@ logs
 node_modules
 
 *.DS_Store
+
+# testing
+coverage
+
+# production
+build
+
+# misc
+.DS_Store
+.env
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+

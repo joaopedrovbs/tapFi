@@ -1,0 +1,25 @@
+.StoreItem {
+  width: 160px;
+  height: 160px;
+
+  margin: 18px;
+
+  box-sizing: border-box;
+  border: 6px solid;
+  border-radius: 6px;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+
+  background-color: #FAFAFA;
+  box-shadow: rgba(0, 0, 0, 0.10) 0px 3px 5px, rgba(0, 0, 0, 0.15) 0px 3px 5px;
+
+  color: #FFF;
+}
+
+.StoreItem > .title {
+  text-align: center;
+  font-size: 18px;
+  opacity: 0.7;
+}

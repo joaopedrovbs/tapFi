@@ -24,7 +24,7 @@ global.async = async
 global.electron = electron
 
 // TAG Function used across all files
-const newTAG = global.newTAG = tag => chalk.yellow( pad(`[${tag}]`, 16))
+const newTAG = global.newTAG = tag => chalk.dim( pad(`[${tag}]`, 16))
 
 // Create TAG for this file
 const TAG = newTAG('main')
@@ -50,9 +50,9 @@ async.mapSeries(setupSteps, (file, next) => require(file)(app, next), err => {
   }
 
   // All went ok
-  console.log(TAG, chalk.green('launched'))
+  console.log(TAG, chalk.green('launched'), (app.helpers.isDev ? chalk.yellow('[DEV]') : chalk.green('[PRODUCTION]')))
 
   // Launch main window
   app.controllers.MainWindow.launch()
+  app.controllers.BarcodeDecoder.launch()
 })
-
