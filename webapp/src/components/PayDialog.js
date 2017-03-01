@@ -1,8 +1,5 @@
 import React from 'react'
-import Paper from 'material-ui/Paper';
 import Dialog from 'material-ui/Dialog';
-import FontIcon from 'material-ui/FontIcon';
-import IconButton from 'material-ui/IconButton';
 import FlatButton from 'material-ui/FlatButton';
 import RaisedButton from 'material-ui/RaisedButton';
 
@@ -28,7 +25,7 @@ export default class PayDialog extends React.Component {
 
     let content, title
 
-    if (this.state.step == 'PAYMENT_METHOD') {
+    if (this.state.step === 'PAYMENT_METHOD') {
       title = 'Payment Method'
       const style = { margin: 12 }
       const methods = [
@@ -44,7 +41,7 @@ export default class PayDialog extends React.Component {
           <RaisedButton label={method} primary={true} style={style} onClick={() => this.handleSelectMethod(method) }/>
         ))}
       </div>)
-    } else if (this.state.step == 'PAY_TAPFI_SEARCH') {
+    } else if (this.state.step === 'PAY_TAPFI_SEARCH') {
       const testUser = {
         name: 'Ivan Seidel',
         acc: 'admin@best-ilp.herokuapp.com',
@@ -81,7 +78,7 @@ export default class PayDialog extends React.Component {
   }
 
   handleSelectMethod(method) {
-    if (method == 'tapFi') {
+    if (method === 'tapFi') {
       this.setState({step: 'PAY_TAPFI_SEARCH'})
     } else {
       this.props.handleClose && this.props.handleClose()

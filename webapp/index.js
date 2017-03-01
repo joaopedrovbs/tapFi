@@ -52,7 +52,11 @@ async.mapSeries(setupSteps, (file, next) => require(file)(app, next), err => {
   // All went ok
   console.log(TAG, chalk.green('launched'), (app.helpers.isDev ? chalk.yellow('[DEV]') : chalk.green('[PRODUCTION]')))
 
+  // Start BLE Serivces
+  app.controllers.ConManager.init()
+  app.controllers.BLEDiscovery.init()
+
   // Launch main window
   app.controllers.MainWindow.launch()
-  app.controllers.BarcodeDecoder.launch()
+  // app.controllers.BarcodeDecoder.launch()
 })
