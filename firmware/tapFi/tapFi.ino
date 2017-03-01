@@ -10,11 +10,10 @@
 // Set Ripple as Manufacturer Data
 const unsigned char manufacturerData[6] = {0x52, 0x69, 0x70, 0x70, 0x6c, 0x65}; 
 const char * name = "admin";
-const char * domain = "john.jpvbs.com";
-const char * key = "johnadmin";
+const char * domain = "best-ilp.heroku";
+const char * key = "admin";
 const char * nAuth = "NOK";
 const char * nOK = "NeM";
-const char * password = "admin";
 float maxValue = 100;
 
 // Create peripheral instance
@@ -27,7 +26,7 @@ BLEService service = BLEService("1823");
 BLECharacteristic cName = BLECharacteristic("fff1", BLEBroadcast | BLERead /*| BLEWrite*/, name);
 BLECharacteristic cDomain = BLECharacteristic("aaa1", BLEBroadcast | BLERead /*| BLEWrite*/, domain);
 BLEFloatCharacteristic cAmount = BLEFloatCharacteristic("bbb1", BLEWrite);
-BLECharacteristic cAuthorize = BLECharacteristic("ccc1", BLERead | BLENotify | BLEIndicate | BLEBroadcast, 26);
+BLECharacteristic cAuthorize = BLECharacteristic("ccc1", BLERead | BLENotify | BLEIndicate | BLEBroadcast, 20);
 
 // create one or more descriptors
 BLEDescriptor dName = BLEDescriptor("2901", "name");
@@ -39,8 +38,9 @@ void setup() {
   // Setting Up BLE
   tapfi.setConnectable(true);
   tapfi.setAppearance(0x0080);
-  tapfi.setLocalName("João Pedro Vilas Boas"); 
-  tapfi.setDeviceName("TapFi");
+  tapfi.setTxPower(-16);
+  tapfi.setLocalName("Ivan Seidel Gomes"); 
+  tapfi.setDeviceName("Ivan Seidel Gomes");
   tapfi.setManufacturerData(manufacturerData, sizeof(manufacturerData));
   //Interval in ms
   tapfi.setAdvertisingInterval(500);
@@ -61,7 +61,7 @@ void setup() {
   tapfi.begin();
 }
 void loop() {
-  tapfi.poll();
+  //tapfi.poll();
   BLECentral central = tapfi.central();
   if (central){
     while (central.connected()) {
@@ -74,7 +74,5 @@ void loop() {
         }
       }
     }
-  }else{
-    cAuthorize.setValue(nAuth);
   }
 }
