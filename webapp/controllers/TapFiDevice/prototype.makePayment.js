@@ -1,3 +1,5 @@
+const CONSTS = require('./CONSTS')
+
 /*
  * Requests a transfer from the tapFi device, for the desired value and destination
  * Will call next on success or error (Failed to authorize/Transfer)

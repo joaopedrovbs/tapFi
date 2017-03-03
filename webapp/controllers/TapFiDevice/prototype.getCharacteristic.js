@@ -1,3 +1,5 @@
+const CONSTS = require('./CONSTS')
+
 /*
  * Get's a single characteristic from the device with the service and characteristic UUID's 
  * Note: Must already be discovered

@@ -1,3 +1,5 @@
+const CONSTS = require('./CONSTS')
+
 /*
  * Requests an authentication key for the specified conditional payment.
  * Will return with the authentication key, or "null" if it didn't authorized
@@ -24,7 +26,7 @@ module.exports = function authorize(value, destination, next) {
       
       console.log(this.TAG, 'connecting')
       this.device.connect(next)
-    }, DEFAULT_TIMEOUT_MS * 2),
+    }, CONSTS.DEFAULT_TIMEOUT_MS * 2),
     
     // Make sure device and account exists, and read characteristics
     this.getInfo.bind(this),
@@ -32,8 +34,8 @@ module.exports = function authorize(value, destination, next) {
     // Get characteristics
     (info, next) => {
       // console.log(this.TAG, 'getting characteristics...')
-      characAuth  = this.getCharacteristic(SERVICE_PAY_UUID, SERVICE_PAY_AUTHORIZE_UUID)
-      characValue = this.getCharacteristic(SERVICE_PAY_UUID, SERVICE_PAY_VALUE_UUID)
+      characAuth  = this.getCharacteristic(CONSTS.SERVICE_PAY_UUID, CONSTS.SERVICE_PAY_AUTHORIZE_UUID)
+      characValue = this.getCharacteristic(CONSTS.SERVICE_PAY_UUID, CONSTS.SERVICE_PAY_VALUE_UUID)
 
       // Check they exist
       if (!characAuth || !characValue)
@@ -47,7 +49,7 @@ module.exports = function authorize(value, destination, next) {
       console.log(this.TAG, 'subscribing...')
       // Subscribe for changes
       characAuth.subscribe(next)
-    }, DEFAULT_TIMEOUT_MS * 2),
+    }, CONSTS.DEFAULT_TIMEOUT_MS * 2),
 
     // Write the ammount and Wait Authorization. (Wrapped in a Timeout call)
     async.timeout((next) => {
@@ -67,7 +69,7 @@ module.exports = function authorize(value, destination, next) {
       // Write value
       characValue.write(valueBuffer, false)
 
-    }, PAYMENT_TIMEOUT_MS, 'Could not Authorize. Timeout occurred'),
+    }, CONSTS.PAYMENT_TIMEOUT_MS, 'Could not Authorize. Timeout occurred'),
 
     // Verify authorization
     (authorization, next) => {

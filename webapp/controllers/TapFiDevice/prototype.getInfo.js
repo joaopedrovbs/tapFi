@@ -1,3 +1,5 @@
+const CONSTS = require('./CONSTS')
+
 /*
  * Reads the information from the TapFi device (Account)
  * and fetches the user data from it's ledger.
@@ -31,9 +33,9 @@ module.exports = function getInfo(next) {
 
       console.log(self.TAG, 'connecting')
       self.device.connect(next)
-    }, DEFAULT_TIMEOUT_MS * 2),
+    }, CONSTS.DEFAULT_TIMEOUT_MS * 2),
 
-    async.timeout(self.discoverCharacteristics.bind(self), DEFAULT_TIMEOUT_MS),
+    async.timeout(self.discoverCharacteristics.bind(self), CONSTS.DEFAULT_TIMEOUT_MS),
 
     // Process data
     (values, next) => {
@@ -51,7 +53,7 @@ module.exports = function getInfo(next) {
     // Gets the destination information (url) and confirms it's authenticity
     async.timeout((next) => {
       app.helpers.IlpKitApi.getAccountInfo(info.acc, next)
-    }, DEFAULT_TIMEOUT_MS),
+    }, CONSTS.DEFAULT_TIMEOUT_MS),
 
     // Update the tapFi info
     (ilpKitInfo, next) => {

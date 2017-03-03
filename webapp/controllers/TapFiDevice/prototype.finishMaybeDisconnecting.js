@@ -1,3 +1,5 @@
+const CONSTS = require('./CONSTS')
+
 /*
  * Helper method to disconnect and callback if flag "disconnect" is set to true
  */
