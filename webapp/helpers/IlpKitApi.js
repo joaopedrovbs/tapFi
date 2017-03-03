@@ -1,7 +1,9 @@
 'use strict'
 const uuid = require('uuid/v4')
 const request = require('request')
-// require('request-debug')(request);
+
+// Setup request debugging
+process.env.DEBUG && require('request-debug')(request);
 
 const HTTPS           = 'https://'
 const DOMAIN          = 'https://best-ilp.herokuapp.com'
@@ -34,6 +36,7 @@ IlpKitApi.makePayment = function (account, password, destination, sourceAmount, 
     sendImmediately: true,
   }
   
+  // Make Quote
   request({
     method: 'POST',
     url: urlQuote,
@@ -47,13 +50,12 @@ IlpKitApi.makePayment = function (account, password, destination, sourceAmount, 
     if (err)
       return next(err)
 
-    console.log(body)
-
     if (response.statusCode != 200)
-      return next('Failed to get a quote')
+      return next(body.message || 'Failed to get a quote')
 
     let destinationAmount = body.destinationAmount
   
+    // Make Transfer
     request({
       method: 'PUT',
       url: urlPay,
@@ -69,7 +71,7 @@ IlpKitApi.makePayment = function (account, password, destination, sourceAmount, 
         return next(err)
 
       if (response.statusCode != 200)
-        return next('Failed to fulfill the payment. Code: ' + response.statusCode)
+        return next(body.message || 'Failed to fulfill the payment: ' + response.statusCode)
 
       next()
     })

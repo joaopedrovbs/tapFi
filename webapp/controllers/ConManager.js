@@ -51,7 +51,7 @@ ConManager.handleQueue = (task, finish) => {
     }) 
   } else if (task.task == TASK_PAY) {
     // Execute payment
-    device.tapFi.makePayment(1, 'admin@best-ilp.herokuapp.com', (err) => {
+    device.tapFi.makePayment(3.14, 'micmic@best-ilp.herokuapp.com', (err) => {
       if (err) {
         console.log(tTAG, chalk.red('Queue error'), err)
         return finish(err)
@@ -128,11 +128,11 @@ ConManager.add = (device, _logUpdate) => {
 
     // Add task to gatter info from device
     let task = TASK_GET_INFO
-    // ConManager.queue.push({task, device})
+    ConManager.queue.push({task, device})
 
     // DEBUG
-    task = TASK_PAY
-    ConManager.queue.push({task, device})
+    // task = TASK_PAY
+    // ConManager.queue.push({task, device})
 
     return 
   }
