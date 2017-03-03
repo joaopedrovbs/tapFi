@@ -41,6 +41,9 @@ exports.launch = function (){
     console.log(TAG, chalk.red('Closed mainWindow'))
   })
 
+  // Listen for changes on Devices in ConManager, and send to webContents
+  app.controllers.ConManager.on('change', (devices) => exports.send('devices', devices))
+
   console.log(TAG, chalk.cyan('Launching mainWindow'))
 }
 
@@ -50,12 +53,12 @@ electron.app.on('window-all-closed', function () {
 });
 
 
-exports.notify = function notify(title, message, stick) {
+exports.send = function send(channel, ...params) {
   if (!mainWindow) {
     return;
   }
 
-  mainWindow.webContents.send('notify', title, message, stick);
+  mainWindow.webContents.send(channel, ...params);
 }
 
 exports.sendBarcode = function (barcode) {

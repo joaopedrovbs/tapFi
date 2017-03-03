@@ -47,7 +47,6 @@ BLEDiscovery.parsePeripheral = (peripheral) => {
     id: peripheral.id,
     name: adv.localName,
     address: peripheral.address,
-    manufacturer: adv.manufacturerData || 'none',
     peripheral: peripheral,
   }
 

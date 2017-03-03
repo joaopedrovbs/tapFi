@@ -74,7 +74,7 @@ module.exports = function authorize(value, destination, next) {
     // Verify authorization
     (authorization, next) => {
       // Check for NotEnoughtMoney
-      if (authorization == NOT_ENOUGH_MONEY) {
+      if (authorization == CONSTS.NOT_ENOUGH_MONEY) {
         return next('Refused payment')
       }
 
