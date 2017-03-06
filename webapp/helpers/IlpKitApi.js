@@ -22,7 +22,12 @@ IlpKitApi.getAccountInfo = (account, next) => {
     if (err)
       return next(err)
 
-    next(null, body)
+    try {
+      let info = JSON.parse(body)
+      return next(null, info)
+    } catch(e){}
+
+    next('Failed to parse user information from ilp kit')
   })
 }
 

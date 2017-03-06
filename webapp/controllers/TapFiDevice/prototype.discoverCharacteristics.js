@@ -7,7 +7,7 @@ module.exports = function discoverCharacteristics(next) {
   async.waterfall([
     // Find Services
     async.timeout((next) => {
-      console.log(this.TAG, 'find services')
+      // console.log(this.TAG, 'find services')
 
       this.device.discoverServices([
         CONSTS.SERVICE_INFO_UUID
@@ -16,7 +16,7 @@ module.exports = function discoverCharacteristics(next) {
 
     // Validate Services, find Characteristics
     async.timeout((services, next) => {
-      console.log(this.TAG, 'validate services. find characteristics')
+      // console.log(this.TAG, 'validate services. find characteristics')
 
       let service = services.find(service => service.uuid === CONSTS.SERVICE_INFO_UUID)
 
@@ -28,7 +28,7 @@ module.exports = function discoverCharacteristics(next) {
 
     // Validate Characteristics, read values
     async.timeout((characteristics, next) => {
-      console.log(this.TAG, 'validate characteristics. read values')
+      // console.log(this.TAG, 'validate characteristics. read values')
 
       let expectedCharacteristicsLength = CONSTS.CHARACTERISTICS.length
       if (characteristics.length !== expectedCharacteristicsLength)

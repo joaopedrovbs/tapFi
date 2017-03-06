@@ -3,13 +3,26 @@ import Dialog from 'material-ui/Dialog';
 import FlatButton from 'material-ui/FlatButton';
 import RaisedButton from 'material-ui/RaisedButton';
 
+import Devices from '../stores/Devices';
+import CartState from '../stores/CartState';
+
 import TapFiUser from './TapFiUser';
 
 import './PayDialog.css';
 
 export default class PayDialog extends React.Component {
   state = {
-    step: 'PAY_TAPFI_SEARCH'
+    step: 'PAYMENT_METHOD',
+    device: null,
+    devices: [],
+  }
+
+  constructor(props) {
+    super(props)
+
+    Devices.subscribe(() => {
+      this.setState({devices: Devices.getState()})
+    })
   }
 
   render() {
@@ -42,19 +55,37 @@ export default class PayDialog extends React.Component {
         ))}
       </div>)
     } else if (this.state.step === 'PAY_TAPFI_SEARCH') {
-      const testUser = {
-        name: 'Ivan Seidel',
-        acc: 'admin@best-ilp.herokuapp.com',
-        thrusted: true,
-        avatar: 'https://avatars0.githubusercontent.com/u/3102127?v=3&s=460',
-        status: 'found',
-        timestamp: Date.now(),
-      }
+      // const testUser = {
+      //   name: 'Ivan Seidel',
+      //   acc: 'admin@best-ilp.herokuapp.com',
+      //   thrusted: true,
+      //   avatar: 'https://avatars0.githubusercontent.com/u/3102127?v=3&s=460',
+      //   status: 'found',
+      //   timestamp: Date.now(),
+      // }
 
       title = 'Looking for tapFi...'
       content = (
         <div className="cards">
-          <TapFiUser userInfo={testUser}/>
+          {this.state.devices.map((device) => (
+            <TapFiUser device={device} key={device.id} onSelect={() => {this.handleSelectDevice(device)}}/> 
+          ))}
+        </div>
+      )
+    } else if (this.state.step === 'PAY_WAIT_CONFIRMATION') {
+      let device = this.state.devices.find(d => d.id == this.state.device)
+      // If not found, go back
+      if (!device) {
+        return this.setState({
+          step: 'PAYMENT_METHOD',
+          device: null,
+        })
+      }
+
+      title = 'Paying: ' + device.name
+      content = (
+        <div className="cards">
+          <TapFiUser device={device} key={device.id} onSelect={() => {}}/> 
         </div>
       )
     } else {
@@ -85,8 +116,22 @@ export default class PayDialog extends React.Component {
     }
   }
 
+  handleSelectDevice(device) {
+    this.setState({
+      device: device.id,
+      step: 'PAY_WAIT_CONFIRMATION'
+    })
+
+    // Get value from cart
+    let value = CartState.getState().cartInfo.total
+    let deviceId = device.id
+
+    // Request payment
+    window['require'] && window['require']('electron').ipcRenderer.send('pay', deviceId, value)
+  }
+
   componentWillReceiveProps(nextProps) {
     if (nextProps.open === false)
-      this.setState({step: 'PAYMENT_METHOD'})
+      this.setState({step: 'PAYMENT_METHOD', device: null})
   }
 }

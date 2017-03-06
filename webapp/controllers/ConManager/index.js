@@ -39,7 +39,7 @@ ConManager.init = function init() {
  */
 ConManager.publishChanges = () => {
   let devices = _.map(ConManager.devices, _.partialRight(_.pick, ['id', 'name', 'info', 'status']))
-  console.log(devices)
+  // console.log(devices)
   ConManager.emit('change', devices)
 }
 

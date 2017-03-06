@@ -42,7 +42,21 @@ exports.launch = function (){
   })
 
   // Listen for changes on Devices in ConManager, and send to webContents
+  app.controllers.ConManager.on('didPay', (success) => exports.send('didPay', success))
   app.controllers.ConManager.on('change', (devices) => exports.send('devices', devices))
+
+  // Listen for incoming pay request events
+  electron.ipcMain.on('pay', (event, deviceId, value) => {
+    console.log(TAG, chalk.cyan('PAY'), chalk.blue(value), chalk.dim(deviceId))
+    
+    // Add to queue
+    let ConManager = app.controllers.ConManager
+    ConManager.queue.push({
+      task: ConManager.CONSTS.TASK_PAY,
+      device: ConManager.getDevice(deviceId),
+      value: value,
+    })
+  })
 
   console.log(TAG, chalk.cyan('Launching mainWindow'))
 }

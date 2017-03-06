@@ -8,6 +8,12 @@
  *     the tapFi account (prototype.makePayment.js)
  */
 var TapFiDevice = module.exports = function (device) {
-  this.TAG = newTAG('TapFi: '+device.advertisement.localName)
+  // Make a shorter name
+  let shortName = device.advertisement.localName
+  let nameParts = shortName.split(' ')
+  shortName = nameParts.shift()
+  shortName += ' ' + nameParts.map(p => p.substring(0, 1).toUpperCase() + '.').join(' ')
+
+  this.TAG = newTAG('💳  '+shortName)+' '
   this.device = device;
 }

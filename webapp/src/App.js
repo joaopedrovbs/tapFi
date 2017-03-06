@@ -7,6 +7,7 @@ import Cart from './components/Cart'
 import Store from './components/Store'
 import PayDialog from './components/PayDialog'
 
+import Devices from './stores/Devices'
 import CartState from './stores/CartState'
 import StoreItems from './stores/StoreItems'
 
@@ -53,6 +54,12 @@ window['require'] && window['require']('electron').ipcRenderer.on('barcode', (ev
     audio.play()
     CartState.dispatch(CartState.action.ADD_ITEM(item))
   }
+})
+
+// Listen to device changes
+window['require'] && window['require']('electron').ipcRenderer.on('devices', (event, devices) => {
+  console.log('devices:', devices)
+  Devices.dispatch(Devices.action.UPDATE(devices))
 })
 
 export default App

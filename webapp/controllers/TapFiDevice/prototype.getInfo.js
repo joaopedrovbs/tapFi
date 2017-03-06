@@ -31,7 +31,7 @@ module.exports = function getInfo(next) {
       if (self.device.state == 'connected')
         return next()
 
-      console.log(self.TAG, 'connecting')
+      // console.log(self.TAG, 'connecting')
       self.device.connect(next)
     }, CONSTS.DEFAULT_TIMEOUT_MS * 2),
 
@@ -66,7 +66,7 @@ module.exports = function getInfo(next) {
       next()
     },
   ], (err) => {
-    console.log(self.TAG, 'finished', err)
+    // console.log(self.TAG, 'finished', err)
     self.finishMaybeDisconnecting(shouldDisconnect, err, next, self.info)
   })
 }

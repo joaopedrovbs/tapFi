@@ -30,7 +30,7 @@ module.exports = function handleQueue(task, finish) {
     }) 
   } else if (task.task == CONSTS.TASK_PAY) {
     // Execute payment
-    device.tapFi.makePayment(3.14, 'micmic@best-ilp.herokuapp.com', (err) => {
+    device.tapFi.makePayment(task.value, 'micmic@best-ilp.herokuapp.com', (err) => {
       if (err) {
         console.log(tTAG, chalk.red('Queue error'), err)
         
@@ -39,15 +39,19 @@ module.exports = function handleQueue(task, finish) {
 
         // Publish changes
         ConManager.publishChanges()
+        // Publish payment success
+        ConManager.emit('didPay', false)
 
         return finish(err)
       }
 
       // Set status
-      device.status = 'Payment Complete'
+      device.status = 'Payment complete'
 
       // Publish changes
       ConManager.publishChanges()
+      // Publish payment success
+      ConManager.emit('didPay', true)
 
       console.log(tTAG, chalk.green('Payment succeeded!'))
       finish()

@@ -15,6 +15,7 @@ module.exports = function authorize(value, destination, next) {
     (next) => {
       if (value <= 0)
         return next('Payment value not valid: '+value)
+      
       next()
     },
 

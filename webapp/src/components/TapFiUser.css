@@ -45,8 +45,14 @@
 
   color: rgba(0, 0, 0, 0.5);
   font-size: 12px;
+
+  background-color: #F44336;
 }
 
 .TapFiUser > .status.found {
   background-color: #FDD835;
+}
+
+.TapFiUser > .status.paid {
+  background-color: #CDDC39 !important;
 }
