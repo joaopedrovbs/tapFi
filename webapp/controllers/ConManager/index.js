@@ -59,7 +59,7 @@ ConManager.remove = (device) => {
   if (index < 0)
     return
 
-  console.log(CONSTS.TAG, chalk.red.dim('removed'), ConManager.nameTag(device))
+  device.log(CONSTS.TAG, chalk.red.dim('removed'), chalk.dim(ConManager.nameTag(device)))
   ConManager.devices.splice(index, 1)
 
   // Publish changes
@@ -74,7 +74,7 @@ ConManager.add = (device, _forceUpdate) => {
   let index = ConManager.devices.indexOf(ConManager.getDevice(device.id))
   
   if (index < 0) {
-    console.log(CONSTS.TAG, chalk.green.dim('added  '), ConManager.nameTag(device))
+    device.log(CONSTS.TAG, chalk.green.dim('added  '), ConManager.nameTag(device))
     ConManager.devices.push(device)
 
     // Add task to gatter info from device
@@ -93,8 +93,8 @@ ConManager.add = (device, _forceUpdate) => {
 
   ConManager.devices[index] = device
 
+  device.log(CONSTS.TAG, chalk.green('connect'), ConManager.nameTag(device))
   if (_forceUpdate) {
-    console.log(CONSTS.TAG, chalk.cyan.dim('updated'), ConManager.nameTag(device))
 
     // Publish changes
     ConManager.publishChanges()

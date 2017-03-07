@@ -33,6 +33,7 @@ module.exports = function deviceDetected(_props) {
   // Instantiate tapFi if needed
   if (!device.tapFi && device.peripheral) {
     device.tapFi = new app.controllers.TapFiDevice(device.peripheral)
+    device.log = console.draft(device.tapFi.tag())
   }
 
   // Update timestamp

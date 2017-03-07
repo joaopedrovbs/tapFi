@@ -19,7 +19,8 @@ module.exports = function getInfo(next) {
   // if (info) 
     // return next(null, info)
 
-  console.log(self.TAG, chalk.cyan.cyan('getInfo'))
+  let TAG = self.TAG + ' ' + chalk.cyan.cyan('getInfo')
+  let log = console.draft(TAG)
 
   // If device is already connected, will not disconnect on the end of process
   let shouldDisconnect = ( self.device.state == 'disconnected' )
@@ -31,7 +32,7 @@ module.exports = function getInfo(next) {
       if (self.device.state == 'connected')
         return next()
 
-      // console.log(self.TAG, 'connecting')
+      log(TAG, 'connecting')
       self.device.connect(next)
     }, CONSTS.DEFAULT_TIMEOUT_MS * 2),
 
@@ -52,6 +53,7 @@ module.exports = function getInfo(next) {
 
     // Gets the destination information (url) and confirms it's authenticity
     async.timeout((next) => {
+      log(TAG, 'Getting account info')
       app.helpers.IlpKitApi.getAccountInfo(info.acc, next)
     }, CONSTS.DEFAULT_TIMEOUT_MS),
 
@@ -66,6 +68,8 @@ module.exports = function getInfo(next) {
       next()
     },
   ], (err) => {
+    log(TAG, 'finished', err ? chalk.red(err) : chalk.green('OK'))
+    
     // console.log(self.TAG, 'finished', err)
     self.finishMaybeDisconnecting(shouldDisconnect, err, next, self.info)
   })

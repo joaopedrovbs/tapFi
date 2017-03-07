@@ -10,7 +10,7 @@
 var TapFiDevice = module.exports = function (device) {
   // Make a shorter name
   let shortName = device.advertisement.localName
-  let nameParts = shortName.split(' ')
+  let nameParts = (shortName || '?').split(' ')
   shortName = nameParts.shift()
   shortName += ' ' + nameParts.map(p => p.substring(0, 1).toUpperCase() + '.').join(' ')
 

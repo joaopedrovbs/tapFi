@@ -18,10 +18,10 @@ module.exports = function discoverCharacteristics(next) {
     async.timeout((services, next) => {
       // console.log(this.TAG, 'validate services. find characteristics')
 
-      let service = services.find(service => service.uuid === CONSTS.SERVICE_INFO_UUID)
+      let service = services.find(service => service && service.uuid === CONSTS.SERVICE_INFO_UUID)
 
       if (!service)
-        return next('Invalid tapFi device. service not found: ' + service.uuid)
+        return next('Invalid tapFi device. service not found: ' + (service && service.uuid))
       
       service.discoverCharacteristics(CONSTS.CHARACTERISTICS, next)
     }, CONSTS.DEFAULT_TIMEOUT_MS),

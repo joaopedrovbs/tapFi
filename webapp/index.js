@@ -36,6 +36,7 @@ console.log(TAG, 'start')
 
 let setupSteps = [
   './setup/env',
+  './setup/log',
   './setup/electron',
   './setup/helpers',
   './setup/controllers',
