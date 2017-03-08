@@ -12,6 +12,10 @@ This contains all source files and project specs for tapFi project, including:
 
 Each part is in it's own separate folder. `webapp`, `firmware`, `project` and `tapfi-api`.
 
+## Security
+
+Read about security in [SECURITY.md](SECURITY.md)
+
 ## Credits
 
 [Ivan Seidel Gomes](https://github.com/ivanseidel)
