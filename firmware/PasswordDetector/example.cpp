@@ -12,8 +12,8 @@ void main() {
     0    // [First tap]
     300, // [Second tap...]
     300,
-    300,
-  }
+    300
+  };
 
   unsigned long totalTime = 0;
   for(int i = 0; i < sizeof(intervals) / sizeof(int); i++) {
@@ -25,7 +25,7 @@ void main() {
     symb.type = TAP;
     symb.start = totalTime;
 
-    password.addSymbol(symb)
+    password.addSymbol(symb);
   }
 
 
@@ -41,7 +41,7 @@ void main() {
   while(NOT_FINISHED) {
     if (DID_TAP) {
       // It will account for current time and create SymbolInput automatically
-      testPassword.addSymbol(TAP)
+      testPassword.addSymbol(TAP);
     }
   }
 
@@ -57,7 +57,7 @@ void main() {
   params.tapDurationThrustFactor  = 0.1; //  ↑  will decrease 10% of total thrust
 
   // Compare passwords
-  float thrust = MatchSequence(&password, &testPassword, params)
+  float thrust = MatchSequence(&password, &testPassword, params);
 
   // Check thrust (0.7 might be something else.. need to test)
   if (thrust > 0.7) {
