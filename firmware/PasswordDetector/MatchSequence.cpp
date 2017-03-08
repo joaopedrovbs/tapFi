@@ -141,5 +141,5 @@ struct MatchParams {
    * Same thing as timeScaleThrustFactor, but used in the comparision for each symbol duration.
    * Note: will be regularized with timeScale automatically
    */ 
-  float tapDurationThrustFactor,
+  float tapDurationThrustFactor
 }
