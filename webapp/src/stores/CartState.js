@@ -63,7 +63,11 @@ let cartReducer = (state = {cart: [], cartInfo: {}}, action) => {
       // Remove item
       state.cart = [...state.cart]
       state.cart.splice(existingItemIndex, 1)
-    }
+    },
+
+    CLEAR(){
+      state.cart = []
+    },
   }
 
   // Execute action
@@ -126,6 +130,12 @@ var action = {
     return {
       type: 'REMOVE_ITEM',
       item,
+    }
+  },
+
+  CLEAR () {
+    return {
+      type: 'CLEAR',
     }
   }
 }

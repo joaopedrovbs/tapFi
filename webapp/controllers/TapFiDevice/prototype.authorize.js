@@ -10,6 +10,8 @@ module.exports = function authorize(value, destination, next) {
   // If device is already connected, will not disconnect on the end of process
   let shouldDisconnect = ( this.device.state == 'disconnected' )
 
+  let log = console.draft(this.TAG, 'authorize');
+
   async.waterfall([
     // Validate input data
     (next) => {
@@ -25,7 +27,7 @@ module.exports = function authorize(value, destination, next) {
       if (this.device.state == 'connected')
         return next()
       
-      console.log(this.TAG, 'connecting')
+      log(this.TAG, 'connecting')
       this.device.connect(next)
     }, CONSTS.DEFAULT_TIMEOUT_MS * 2),
     
@@ -34,7 +36,7 @@ module.exports = function authorize(value, destination, next) {
 
     // Get characteristics
     (info, next) => {
-      // console.log(this.TAG, 'getting characteristics...')
+      log(this.TAG, 'getting characteristics...')
       characAuth  = this.getCharacteristic(CONSTS.SERVICE_PAY_UUID, CONSTS.SERVICE_PAY_AUTHORIZE_UUID)
       characValue = this.getCharacteristic(CONSTS.SERVICE_PAY_UUID, CONSTS.SERVICE_PAY_VALUE_UUID)
 
@@ -47,19 +49,20 @@ module.exports = function authorize(value, destination, next) {
 
     // Subscribe to notification on Auth
     async.timeout((next) => {
-      console.log(this.TAG, 'subscribing...')
+      log(this.TAG, 'subscribing...')
+
       // Subscribe for changes
       characAuth.subscribe(next)
     }, CONSTS.DEFAULT_TIMEOUT_MS * 2),
 
     // Write the ammount and Wait Authorization. (Wrapped in a Timeout call)
     async.timeout((next) => {
-      console.log(this.TAG, 'Waiting authentication')
+      log(this.TAG, 'Waiting authentication')
 
       // Listen for changes in auth characteristic
       characAuth.once('data', (authKey) => {
         authorization = authKey.toString()
-        // console.log(this.TAG, chalk.cyan('new data in AUTH:'), chalk.green(authorization))
+        // log(this.TAG, chalk.cyan('new data in AUTH:'), chalk.green(authorization))
         next(null, authorization)
       })
 
@@ -83,7 +86,7 @@ module.exports = function authorize(value, destination, next) {
       next()
     },
   ], (err) => {
-    console.log(this.TAG, 'finished', err, authorization && authorization.toString())
+    log(this.TAG, 'finished', chalk.red(err), authorization && authorization.toString())
 
     // Unsubscribe to changes
     characAuth && characAuth.unsubscribe()

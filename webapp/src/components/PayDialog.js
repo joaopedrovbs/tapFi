@@ -23,6 +23,12 @@ export default class PayDialog extends React.Component {
     Devices.subscribe(() => {
       this.setState({devices: Devices.getState()})
     })
+
+    CartState.subscribe(() => {
+      // Check if did payment
+      if (CartState.getState().cart.length == 0)
+        this.props.handleClose && this.props.handleClose();
+    })
   }
 
   render() {

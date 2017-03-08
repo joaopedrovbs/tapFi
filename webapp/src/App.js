@@ -62,4 +62,10 @@ window['require'] && window['require']('electron').ipcRenderer.on('devices', (ev
   Devices.dispatch(Devices.action.UPDATE(devices))
 })
 
+// Listen to payEvents
+window['require'] && window['require']('electron').ipcRenderer.on('didPay', (event, success) => {
+  console.log('didPay:', success)
+  CartState.dispatch(CartState.action.CLEAR())
+})
+
 export default App
