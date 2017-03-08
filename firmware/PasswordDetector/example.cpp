@@ -35,7 +35,7 @@ void main() {
   PasswordSequence testPassword();
 
   // Always clear before re-using
-  testPassword();
+  testPassword.clear();
 
   // Wait timeout
   while(NOT_FINISHED) {
