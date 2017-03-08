@@ -53,7 +53,7 @@ float MatchSequence(PasswordSequence s1, PasswordSequence s2, MatchParams params
   }
 
   // Decrease thrust probability proportionaly to the timeScaleAbs and timeScaleThrustFactor
-  totalProb = totalProb * (1.0 - timeScaleAbs * params.timeScaleThrustFactor);
+  totalProb -= (timeScaleAbs * params.timeScaleThrustFactor);
 
   /* Save TAP symbol events to a separate list */
   LinkedList<SymbolInput> s1Taps = LinkedList<SymbolInput>();
@@ -103,7 +103,7 @@ float MatchSequence(PasswordSequence s1, PasswordSequence s2, MatchParams params
     }
 
     // Decrease total probability proportionally
-    totalProb = totalProb * (1.0 - durationScaleAbs * tapDurationThrustFactor);
+    totalProb -= (durationScaleAbs * tapDurationThrustFactor);
   }
 
   return totalProb;
