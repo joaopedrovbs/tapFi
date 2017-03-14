@@ -12,7 +12,7 @@ import './PayDialog.css';
 
 export default class PayDialog extends React.Component {
   state = {
-    step: 'PAYMENT_METHOD',
+    step: 'PAY_TAPFI_SEARCH',
     device: null,
     devices: [],
   }
@@ -83,7 +83,7 @@ export default class PayDialog extends React.Component {
       // If not found, go back
       if (!device) {
         return this.setState({
-          step: 'PAYMENT_METHOD',
+          step: 'PAY_TAPFI_SEARCH',
           device: null,
         })
       }
@@ -138,6 +138,6 @@ export default class PayDialog extends React.Component {
 
   componentWillReceiveProps(nextProps) {
     if (nextProps.open === false)
-      this.setState({step: 'PAYMENT_METHOD', device: null})
+      this.setState({step: 'PAY_TAPFI_SEARCH', device: null})
   }
 }
