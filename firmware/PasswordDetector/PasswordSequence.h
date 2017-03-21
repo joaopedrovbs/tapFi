@@ -37,6 +37,6 @@ public:
    * Checks if this sequence is full (MAXIMUM_EVENTS reached)
    */
   bool isFull();
-}
+};
 
 #endif

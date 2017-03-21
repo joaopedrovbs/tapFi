@@ -2,6 +2,7 @@
 #define SYMBOL_INPUT_H
 
 #define SYMBOL_TYPE_NUM   7
+
 /*
  * SymbolType is a basic unit of representation of a symbol.
  * Since gestures do not provide 'chars' as output, we declare
