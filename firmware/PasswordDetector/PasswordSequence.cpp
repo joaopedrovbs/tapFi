@@ -1,67 +1,55 @@
-#include <LinkedList.h>
-#include "SymbolInput.h"
+#include "PasswordSequence.h"
 
 // Maximum number of events (tap/rotations) that can happen
 #define MAXIMUM_EVENTS      15
 
-/* 
- * Stores each SymbolInput with it's timestamp
+/*
+ * Constructor
  */
-class PasswordSequence : LinkedList<SymbolInput> {
-private:
-  // Saves the beggining of time of the sequence.
-  unsigned long startTime;
-public:
-  /*
-   * Constructor
-   */
-  PasswordSequence(unsigned long startTime = 0)
-    : LinkedList<SymbolInput>(),
-      startTime(startTime)
-  {
-    // 
+PasswordSequence(unsigned long startTime = 0)
+{
+  // 
+}
+
+/*
+ * Adds a new symbol relative to the beginning of the sequence
+ * Should be used in real-time recording
+ */
+void PasswordSequence::addSymbol(SymbolType symbolType, unsigned long duration = 0) {
+  if (isFull()) {
+    return false
   }
 
-  /*
-   * Adds a new symbol relative to the beginning of the sequence
-   * Should be used in real-time recording
-   */
-  void addSymbol(SymbolType symbolType, unsigned long duration = 0) {
-    if (isFull()) {
-      return false
-    }
-
-    // Checks if it's the first symbol being inserted. 
-    // If so, get current time and stores it
-    if (this.size() == 0) {
-      startTime = millis()
-    }
-
-    SymbolInput symbol;
-    symbol.type = symbolType;
-    symbol.start = millis() - startTime;
-    symbol.duration = duration;
-
-    return this.add(symbol)
+  // Checks if it's the first symbol being inserted. 
+  // If so, get current time and stores it
+  if (list.size() == 0) {
+    startTime = millis()
   }
 
-  /*
-   * Adds a new SymbolInput (with start/duration) in a "raw" manner
-   * (Used to load a known password)
-   * Returns true if succeded adding
-   */
-  bool addSymbol(SymbolInput symbol) {
-    if (isFull()) {
-      return false
-    }
+  SymbolInput symbol;
+  symbol.type = symbolType;
+  symbol.start = millis() - startTime;
+  symbol.duration = duration;
 
-    return this.add(symbol);
+  return list.add(symbol)
+}
+
+/*
+ * Adds a new SymbolInput (with start/duration) in a "raw" manner
+ * (Used to load a known password)
+ * Returns true if succeded adding
+ */
+bool PasswordSequence::addSymbol(SymbolInput symbol) {
+  if (isFull()) {
+    return false
   }
 
-  /*
-   * Checks if this sequence is full (MAXIMUM_EVENTS reached)
-   */
-  bool isFull() {
-    return this.size() >= MAXIMUM_EVENTS;
-  }
+  return list.add(symbol);
+}
+
+/*
+ * Checks if this sequence is full (MAXIMUM_EVENTS reached)
+ */
+bool PasswordSequence::isFull() {
+  return list.size() >= MAXIMUM_EVENTS;
 }

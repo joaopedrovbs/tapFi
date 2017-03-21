@@ -1,3 +1,6 @@
+#ifndef SYMBOL_INPUT_H
+#define SYMBOL_INPUT_H
+
 #define SYMBOL_TYPE_NUM   7
 /*
  * SymbolType is a basic unit of representation of a symbol.
@@ -12,7 +15,7 @@ enum SymbolType {
   X_MOVE,
   Y_MOVE,
   Z_MOVE
-}
+};
 
 /*
  * A SymbolInput is both the representation of the symbol itself,
@@ -20,12 +23,14 @@ enum SymbolType {
  */
 typedef SymbolInput {
   // Type of symbol
-  SymbolType type,
+  SymbolType type;
 
   // Start and end duration (`duration` is 0 for TAP event)
-  unsigned long start,
-  unsigned long duration,
+  unsigned long start;
+  unsigned long duration;
 
   // Used internally in the algorithm to detect if a match has been found 
-  bool matched
-}
+  bool matched;
+};
+
+#endif
