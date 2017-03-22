@@ -8,6 +8,7 @@
 #include <ge.h>
 #include <sc.h>
 
+#define ITERATIONS 50
 
 int test() {
   unsigned char public_key[32], private_key[64], seed[32], scalar[32];
@@ -31,9 +32,9 @@ int test() {
 
   /* verify the signature */
   if (ed25519_verify(signature, message, message_len, public_key)) {
-    Serial.print("valid signature\n");
+    Serial.println("valid signature");
   } else {
-    Serial.print("invalid signature\n");
+    Serial.println("invalid signature");
   }
 
   /* create scalar and add it to the keypair */
@@ -45,17 +46,17 @@ int test() {
 
   /* verify the signature with the new keypair */
   if (ed25519_verify(signature, message, message_len, public_key)) {
-    Serial.print("valid signature\n");
+    Serial.println("valid signature");
   } else {
-    Serial.print("invalid signature\n");
+    Serial.println("invalid signature");
   }
 
   /* make a slight adjustment and verify again */
   signature[44] ^= 0x10;
   if (ed25519_verify(signature, message, message_len, public_key)) {
-    Serial.print("did not detect signature change\n");
+    Serial.println("did not detect signature change");
   } else {
-    Serial.print("correctly detected signature change\n");
+    Serial.println("correctly detected signature change");
   }
 
   /* generate two keypairs for testing key exchange */
@@ -70,90 +71,90 @@ int test() {
 
   for (i = 0; i < 32; ++i) {
     if (shared_secret[i] != other_shared_secret[i]) {
-        Serial.print("key exchange was incorrect\n");
+        Serial.println("key exchange was incorrect");
         break;
     }
   }
 
   if (i == 32) {
-    Serial.print("key exchange was correct\n");
+    Serial.println("key exchange was correct");
   }
 
   /* test performance */
   Serial.print("testing seed generation performance: ");
   start = millis();
-  for (i = 0; i < 10000; ++i) {
+  for (i = 0; i < ITERATIONS; ++i) {
     ed25519_create_seed(seed);
   }
   end = millis();
 
-  Serial.print(end - start);
-  Serial.print("ms per seed\n");
+  Serial.print((end - start) / (float)ITERATIONS);
+  Serial.println("ms per seed");
 
 
   Serial.print("testing key generation performance: ");
   start = millis();
-  for (i = 0; i < 10000; ++i) {
+  for (i = 0; i < ITERATIONS; ++i) {
     ed25519_create_keypair(public_key, private_key, seed);
   }
   end = millis();
 
-  Serial.print(end - start);
-  Serial.print("ms per keypair\n");
+  Serial.print((end - start) / (float)ITERATIONS);
+  Serial.println("ms per keypair");
 
   Serial.print("testing sign performance: ");
   start = millis();
-  for (i = 0; i < 10000; ++i) {
+  for (i = 0; i < ITERATIONS; ++i) {
     ed25519_sign(signature, message, message_len, public_key, private_key);
   }
   end = millis();
 
-  Serial.print(end - start);
-  Serial.print("ms per signature\n");
+  Serial.print((end - start) / (float)ITERATIONS);
+  Serial.println("ms per signature");
 
 
   Serial.print("testing verify performance: ");
   start = millis();
-  for (i = 0; i < 10000; ++i) {
+  for (i = 0; i < ITERATIONS; ++i) {
     ed25519_verify(signature, message, message_len, public_key);
   }
   end = millis();
 
-  Serial.print(end - start);
-  Serial.print("ms per signature\n");
+  Serial.print((end - start) / (float)ITERATIONS);
+  Serial.println("ms per signature");
 
 
   Serial.print("testing keypair scalar addition performance: ");
   start = millis();
-  for (i = 0; i < 10000; ++i) {
+  for (i = 0; i < ITERATIONS; ++i) {
     ed25519_add_scalar(public_key, private_key, scalar);
   }
   end = millis();
 
-  Serial.print(end - start);
-  Serial.print("ms per keypair\n");
+  Serial.print((end - start) / (float)ITERATIONS);
+  Serial.println("ms per keypair");
 
 
   Serial.print("testing public key scalar addition performance: ");
   start = millis();
-  for (i = 0; i < 10000; ++i) {
+  for (i = 0; i < ITERATIONS; ++i) {
     ed25519_add_scalar(public_key, NULL, scalar);
   }
   end = millis();
 
-  Serial.print(end - start);
-  Serial.print("ms per key\n");
+  Serial.print((end - start) / (float)ITERATIONS);
+  Serial.println("ms per key");
 
 
   Serial.print("testing key exchange performance: ");
   start = millis();
-  for (i = 0; i < 10000; ++i) {
+  for (i = 0; i < ITERATIONS; ++i) {
     ed25519_key_exchange(shared_secret, other_public_key, private_key);
   }
   end = millis();
 
-  Serial.print(end - start);
-  Serial.print("ms per sharedsecret\n");
+  Serial.print((end - start) / (float)ITERATIONS);
+  Serial.println("ms per sharedsecret");
 
 
   return 0;
