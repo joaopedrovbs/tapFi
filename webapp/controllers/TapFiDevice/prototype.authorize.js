@@ -1,4 +1,5 @@
 const CONSTS = require('./CONSTS')
+const IlpPacket = require('ilp-packet')
 
 /*
  * Requests an authentication key for the specified conditional payment.
@@ -6,6 +7,15 @@ const CONSTS = require('./CONSTS')
  */
 module.exports = function authorize(value, destination, next) {
   let characAuth, characValue, authorization
+  let packet, condition, fullPacket
+
+  packet = IlpPacket.serializeIlpPayment({
+    amount: (value * 100).toString(),
+    account: destination,
+    data: ''
+  })
+
+  console.log(this.TAG, 'Packet', packet.toString('hex'))
 
   // If device is already connected, will not disconnect on the end of process
   let shouldDisconnect = ( this.device.state == 'disconnected' )

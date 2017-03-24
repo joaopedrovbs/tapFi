@@ -9,11 +9,10 @@ const CONSTS = require('./CONSTS')
  */
 module.exports = function makePayment(value, destination, next, completion) {
   async.waterfall([
-    // Set completion status
-    (next) => { completion && completion('Authorizing...'); next() },
-
     // Get device's Authorization
     (next) => {
+      completion && completion('Authorizing...');
+      
       this.authorize(value, destination, next)
     },
 

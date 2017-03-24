@@ -46,7 +46,7 @@ async.mapSeries(setupSteps, (file, next) => require(file)(app, next), err => {
   if(err) {
     // An error has occurred, exit process
     console.log(TAG, chalk.red('failed to launch'), err)
-    process.exit()
+    process.exit(1)
     return;
   }
 
