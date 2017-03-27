@@ -12,17 +12,31 @@
 #include "PasswordSequence.h"
 #include <SparkFunMPU9250-DMP.h>
 
-int savedPassword[] = {
+// Stored Double Tap Timing
+int doubleTap[] = {
   0,
   500
+};
+
+// Stored Password Timing 
+int password[] = {
+  0,
+  500,
+  500  
 };
 
 // Hardware pins of the Beacon Board
 #define LED_R 16
 #define LED_G 12
 #define LED_B 15
+#define RUMBLE 20
 #define SW1 8
 #define SW2 18
+
+// Timeouts
+#define CONNECTION_TIMEOUT 20000  //Timeout for connection  
+#define PASSWORD_TIMEOUT 2000  //Timeout for password  
+#define TAP_TIMEOUT 2000   //Timeout for Taps
 
 // Set Ripple as Manufacturer Data
 const unsigned char manufacturerData[6] = {0x52, 0x69, 0x70, 0x70, 0x6c, 0x65}; 
@@ -34,15 +48,11 @@ const char * nOK = "NeM";
 float maxValue = 50;
 
 // Flags for toggling the system
-bool readingSW1 = false;
-bool isOn = false;
-bool lastState = false;
+bool tapfiOn = false;
 
 // Longs for Timeout and Debouncing
 unsigned long time = 0;   
 unsigned long timeOn = 0;
-unsigned long debounce = 200;
-unsigned long cTimeout = 15000;  //Timeout for connection  
 
 // Create IMU Instance
 MPU9250_DMP imu;
@@ -65,9 +75,36 @@ BLEDescriptor dDomain = BLEDescriptor("2901", "domain");
 BLEDescriptor dAmount = BLEDescriptor("2901", "amount");
 BLEDescriptor dAuthorize = BLEDescriptor("2901", "authorize");
 
-PasswordSequence passwordSaved();
-PasswordSequence passwordEntered();
+// Instantiate Password Sequences
+PasswordSequence tapPattern;
+PasswordSequence tapDone;
+PasswordSequence passwordSaved;
+PasswordSequence passwordEntered;
 
+// Function to control the RGB led in a simpler way
+void RGB(bool r = false,bool g = false, bool b = false){
+  digitalWrite(LED_R, !r);
+  digitalWrite(LED_G, !g);
+  digitalWrite(LED_B, !b);
+}
+
+void userAlert(short rep, short duration_ms, bool motor = true, bool r = false, bool g = false, bool b = false){
+  RGB();
+  for(int a = 0; a < rep; a++){
+    if (motor){
+      digitalWrite(RUMBLE, HIGH);
+    }
+    RGB(r, g, b);
+    delay(duration_ms);
+    if (motor){
+      digitalWrite(RUMBLE, LOW);
+    }
+    RGB(r, g, b);
+    delay(duration_ms);
+  }
+}
+
+// Function for stopping the microcontroller and displaying errors when they occur
 void haltError(int errorId, int code){
   Serial.print("Error: #");
   Serial.print(errorId);
@@ -81,125 +118,187 @@ void haltError(int errorId, int code){
   }  
 }
 
-int getTap(){
+// Returns True if a TAP happened on the Z-Axis, either up or down
+bool tapped(){
   if( imu.fifoAvailable() ){
-    Serial.println("Got FIFO Available ");
     imu.dmpUpdateFifo();
     if( imu.tapAvailable() ){
-      Serial.println("Got tapAvailable ");
       unsigned char tapDir = imu.getTapDir();
-      unsigned char tapCnt = imu.getTapCount();
       switch (tapDir){
-      case TAP_X_UP:
+        case TAP_Z_UP:
+          Serial.println("TAPPED UP");
+          return true;
           break;
-      case TAP_X_DOWN:
-          break;
-      case TAP_Y_UP:
-          break;
-      case TAP_Y_DOWN:
-          break;
-      case TAP_Z_UP:
-         Serial.println("TAPPED UP");
-          return 1;
-          break;
-      case TAP_Z_DOWN:
+        case TAP_Z_DOWN:
           Serial.println("TAPPED DOWN");
-          return 1;
+          return true;
           break;
+      }
+    }
+  }
+  return false;
+}
+
+// Check if the double tap entered is equal to the one stored returns true if ok 
+bool didDoubleTap(){
+  MatchParams params;                    // Configure match parameters
+  params.timeScaleMax             = 1.0; // 50% speedup/speedown allowed
+  params.timeScaleThrustFactor    = 0.2; //  ↑  will decrease 20% of total thrust
+  params.tapDurationScaleMax      = 0.2; // 20% speedup/speedown allowed in each interval
+  params.tapDurationThrustFactor  = 0.1; //  ↑  will decrease 10% of total thrust
+
+  // Compare passwords
+  float thrust = MatchSequence(&tapPattern, &tapDone, params);
+  
+  // Check thrust (0.7 might be something else.. need to test)
+  Serial.print("Thrust: \033[34m");
+  Serial.print(thrust);
+  Serial.println("\033[0m");
+  
+  // Convert Thrust Values to Boolean
+  if (thrust > 0.7) {
+    return true;
+  } else {
+    return false;
+  }
+}
+
+// Read the tap entered and store it in a passowrd sequence
+void readTap(bool debug = false){
+  unsigned long lastTap = millis();
+
+  // Always clear before re-using
+  tapDone.list.clear();
+
+  // Wait timeout
+  while(millis() - lastTap < TAP_TIMEOUT) {
+    if (tapped()){
+      // It will account for current time and create SymbolInput automatically
+      tapDone.addSymbol(TAP);
+      if(debug){
+        Serial.print("\033[36m TAP \033[0m");
+        Serial.print(" Time: \033[31m");
+        Serial.print(tapDone.list.get(tapDone.list.size() - 1).start);
+        Serial.println("\033[0m");
+      }
+      lastTap = millis();
+    }
+  }
+
+}
+
+// Check the password the user entered against the recorded one, true if ok
+bool didPassword(){
+  MatchParams params;                    // Configure match parameters
+  params.timeScaleMax             = 1.0; // 50% speedup/speedown allowed
+  params.timeScaleThrustFactor    = 0.2; //  ↑  will decrease 20% of total thrust
+  params.tapDurationScaleMax      = 0.2; // 20% speedup/speedown allowed in each interval
+  params.tapDurationThrustFactor  = 0.1; //  ↑  will decrease 10% of total thrust
+  // Compare passwords
+  float thrust = MatchSequence(&passwordSaved, &passwordEntered, params);
+  // Check thrust (0.7 might be something else.. need to test)
+  Serial.print("Thrust 2: \033[34m");
+  Serial.print(thrust);
+  Serial.println("\033[0m");
+  //  Converts trust to boolean
+  if (thrust > 0.7) {
+    return true;
+  } else {
+    return false;
+  }
+}
+
+// Read the taps and store them in a PasswordSequence
+void readPassword(bool debug = false){
+  unsigned long lastTap = millis();
+  
+  // Always clear before re-using
+  passwordEntered.list.clear();
+
+  // Wait timeout
+  while(millis() - lastTap < PASSWORD_TIMEOUT) {
+    if (tapped()){
+      // It will account for current time and create SymbolInput automatically
+      passwordEntered.addSymbol(TAP);
+      if(debug){
+        Serial.print("\033[36m TAP \033[0m");
+        Serial.print(" Time: \033[31m");
+        Serial.print(passwordEntered.list.get(passwordEntered.list.size() - 1).start);
+        Serial.println("\033[0m");
+      }
+      lastTap = millis();
+    }
+  }
+}
+
+// Password retires and checking
+bool passwordCheck(int retries){
+  for(int s=0; s < retries; s++){
+    Serial.println("Try Password");
+      readPassword(true);   
+    if(didPassword()){
+      Serial.println("Password OK");
+      userAlert(1,400,0,0,1,0);
+      return true;
+      break;
+    }
+    else{
+      userAlert(2,300,0,1,0,0);
+    }
+  }
+
+  return false;
+}
+
+// 
+void didConnect(){
+  BLECentral central = tapfi.central();
+  if (central){
+    while (central.connected()) {
+      if(cAmount.written()){
+        Serial.print("Amount is: ");
+        Serial.println(cAmount.value());
+        if(maxValue - cAmount.value() >= 0 && (float) cAmount.value() > 0 && passwordCheck(3)){
+          Serial.print("Key written: ");
+          Serial.println(key);
+          cAuthorize.setValue(key);
+          cAuthorize.canNotify();
+          break;
+        }else{
+          cAuthorize.setValue(nOK);
+          break;
+        }
       }
     }
   }
 }
 
-bool checkPassword(){
-  /*
-   * Compares two sequences and return the thrust in being the same
-   */
-
-  // Configure match parameters
-  MatchParams params;
-  params.timeScaleMax             = 0.0005; // 50% speedup/speedown allowed
-  params.timeScaleThrustFactor    = 0.0002; //  ↑  will decrease 20% of total thrust
-  params.tapDurationScaleMax      = 0.0002; // 20% speedup/speedown allowed in each interval
-  params.tapDurationThrustFactor  = 0.0001; //  ↑  will decrease 10% of total thrust
-
-  // Compare passwords
-  float thrust = MatchSequence(&passwordSaved, &passwordEntered, params);
-  // Check thrust (0.7 might be something else.. need to test)
-  if (thrust > 0.7) {
-    return false;
-  } else {
-    return true;
-  }
-}
-
-void getPasswordTap(){
-
-  // Always clear before re-using
-  passwordEntered.clear();
-
-  // Wait timeout
-  while(true) {
-    if (getTap()) {
-      // It will account for current time and create SymbolInput automatically
-      passwordEntered.addSymbol(TAP);
-    }
-  }
-}
-
 void setup() {
-  //Hardware Initialization
-  pinMode(LED_R,OUTPUT);
-  pinMode(LED_G,OUTPUT);
-  pinMode(LED_B,OUTPUT); 
-  pinMode(SW1,INPUT_PULLUP);
-  pinMode(SW2,INPUT_PULLUP); 
-  
   // Serial Initialization
   int code;
+  delay(200);
   Serial.begin(115200);
 
   Serial.println();
   Serial.println();
   Serial.println("Start");
   
-  // Loading Saved Password
-  unsigned long totalTime = 0;
-  for (unsigned int i = 0 ; i < sizeof(savedPassword) / sizeof(int) ; i++) {
-    SymbolInput symb;
-    
-    // Increment start time
-    totalTime += savedPassword[i];
-
-    symb.type = TAP;
-    symb.start = totalTime;
-
-    passwordSaved.addSymbol(symb);
-  }
+  //Hardware Initialization
+  pinMode(LED_R, OUTPUT);
+  pinMode(LED_G, OUTPUT);
+  pinMode(LED_B, OUTPUT);
+  pinMode(RUMBLE, OUTPUT); 
+  pinMode(SW1, INPUT_PULLUP);
+  pinMode(SW2, INPUT_PULLUP); 
   
-  // Start IMU with TAP enabled
-  if (code = imu.begin())
-    haltError(1, code);
-
-  if (code = imu.dmpBegin(DMP_FEATURE_TAP, 10))
-    haltError(2, code);
- 
-  unsigned short xThresh = 0;     // Disable x-axis tap
-  unsigned short yThresh = 0;     // Disable y-axis tap
-  unsigned short zThresh = 100;   // Set z-axis tap thresh to 100 mg/ms
-  unsigned char taps = 1;         // Set minimum taps to 1
-  unsigned short tapTime = 100;   // Set tap time to 100ms
-  unsigned short tapMulti = 1000; // Set multi-tap time to 1s
-  
-  if(code = imu.dmpSetTap(xThresh, yThresh, zThresh, taps, tapTime, tapMulti))
-    haltError(3, code);
+  RGB();
   
   // Setting Up BLE
   tapfi.setConnectable(true);
   tapfi.setAppearance(0x0080);
   tapfi.setTxPower(-30);
-  tapfi.setLocalName("João Pedro Vilas Boas"); 
-  tapfi.setDeviceName("João Pedro Vilas Boas");
+  tapfi.setLocalName("João Pedro"); 
+  tapfi.setDeviceName("João Pedro");
   tapfi.setManufacturerData(manufacturerData, sizeof(manufacturerData));
   //Interval in ms
   tapfi.setAdvertisingInterval(500);
@@ -216,53 +315,75 @@ void setup() {
   tapfi.addAttribute(cAuthorize);
   tapfi.addAttribute(dAuthorize);
 
+  tapfi.begin();
+  Serial.println("TapFi Begin");
+  
+  // Loading Saved Tap Pattern
+  unsigned long totalTime = 0;
+  for (unsigned int i = 0 ; i < sizeof(doubleTap) / sizeof(int) ; i++) {
+    SymbolInput symb;
+    
+    // Increment start time
+    totalTime += doubleTap[i];
 
-  Serial.println("All Ok");
-}
+    symb.type = TAP;
+    symb.start = totalTime;
+
+    tapPattern.addSymbol(symb);
+  }
+
+  totalTime = 0;
+  for (unsigned int i = 0 ; i < sizeof(password) / sizeof(int) ; i++) {
+    SymbolInput symb;
+    
+    // Increment start time
+    totalTime += password[i];
+
+    symb.type = TAP;
+    symb.start = totalTime;
+
+    passwordSaved.addSymbol(symb);
+  }
+
+
+  // Start IMU
+  if (code = imu.begin())
+    haltError(1, code);
+  // Enables Tap Recognition at 200hz
+  if (code = imu.dmpBegin(DMP_FEATURE_TAP, 200))
+    haltError(2, code);
+  // Tap Parameters
+  unsigned short zThresh = 180;   // Set z-axis tap thresh to 100 mg/ms
+  unsigned char taps = 1;         // Set minimum taps to 1
+  unsigned short tapTime = 60;   // Set tap time to 100ms
+  unsigned short tapMulti = 60; // Set multi-tap time to 1s
+  
+  // Initializes Tap with Parameters
+  if(code = imu.dmpSetTap(0, 0, zThresh, taps, tapTime, tapMulti))
+    haltError(3, code);
+
+  Serial.println("Imu Begin");
+} // End Setup
 
 void loop() {
-  getPasswordTap();
-  bool activate = checkPassword();
-  if(lastState == false && activate == false){
-    if(isOn){
-      isOn=false;
-      tapfi.end();
-    } else {
-      isOn=true;
-      tapfi.begin();
-      timeOn=millis();
+  if (didDoubleTap()){
+    RGB();
+    userAlert(1,500,0,0,1,0);
+    Serial.println("BLE Should be ON");
+    timeOn=millis();
+    tapfiOn=true;
+    RGB(0,1,0);
+    while(millis() - timeOn < CONNECTION_TIMEOUT){
+      tapfi.poll();
+      didConnect();
     }
-  }
-  lastState=activate;
-  
-  if(isOn){
-    digitalWrite(LED_G,LOW);
-    digitalWrite(LED_R,HIGH);
-    digitalWrite(LED_B,HIGH);
-    tapfi.poll();
-    BLECentral central = tapfi.central();
-    if (central){
-      while (central.connected()) {
-        if(cAmount.written()){
-          if(maxValue - cAmount.value() >= 0 && (float) cAmount.value() > 0 && digitalRead(SW1)){
-            cAuthorize.setValue(key);
-            cAuthorize.canNotify();
-          }else{
-            cAuthorize.setValue(nOK);
-          }
-        }
-      }
-    }
+    
   }else{
-    digitalWrite(LED_G,HIGH);
-    digitalWrite(LED_B,HIGH);
-    digitalWrite(LED_R,LOW);
+    if(tapfiOn){
+      Serial.println("BLE Should be OFF");
+      tapfiOn=false;
+    }
+    RGB(1,0,0);
   }
-  
-  if(millis() - timeOn > cTimeout){
-      isOn=false;
-      timeOn=millis();
-      tapfi.end();
-  }
-
+  readTap(true);
 }

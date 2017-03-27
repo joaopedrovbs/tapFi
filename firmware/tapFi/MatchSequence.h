@@ -52,6 +52,6 @@ struct MatchParams {
  *
  * Pass in a MatchParameters object to be used
  */
-float MatchSequence(PasswordSequence s1, PasswordSequence s2, MatchParams params);
+float MatchSequence(PasswordSequence *s1, PasswordSequence *s2, MatchParams params);
 
 #endif
