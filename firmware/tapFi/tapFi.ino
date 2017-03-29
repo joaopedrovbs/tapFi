@@ -95,14 +95,14 @@ void RGB(bool r = false,bool g = false, bool b = false){
 void userAlert(short rep, short duration_ms, bool motor = true, bool r = false, bool g = false, bool b = false){
   RGB();
   for(int a = 0; a < rep; a++){
-    // if (motor){
-    //   digitalWrite(RUMBLE, HIGH);
-    // }
+    if (motor){
+      digitalWrite(RUMBLE, HIGH);
+    }
     RGB(r, g, b);
     delay(duration_ms);
-    // if (motor){
-    //   digitalWrite(RUMBLE, LOW);
-    // }
+    if (motor){
+      digitalWrite(RUMBLE, LOW);
+    }
     RGB(r, g, b);
     delay(duration_ms);
   }
@@ -268,13 +268,13 @@ bool passwordCheck(int retries){
     if(didPassword()){
       RGB();
       Serial.println("Password OK");
-      userAlert(1,500,0,0,1,0);
+      userAlert(1,500,1,0,1,0);
       return true;
       break;
     }
     else{
       RGB();
-      userAlert(2,500,0,1,1,0);
+      userAlert(2,500,1,1,1,0);
     }
   }
 
@@ -369,13 +369,13 @@ void setup() {
     haltError(2, code);
 
   // Tap Parameters
-  unsigned short zThresh = 250;   // Set z-axis tap thresh to 100 mg/ms
+  unsigned short zThresh = 200;   // Set z-axis tap thresh to 100 mg/ms
   unsigned char taps = 1;         // Set minimum taps to 1
   unsigned short tapTime = 100;   // Set tap time to 100ms
   unsigned short tapMulti = 100; // Set multi-tap time to 1s
   
   // Initializes Tap with Parameters
-  if(code = imu.dmpSetTap(250, 250, zThresh, taps, tapTime, tapMulti))
+  if(code = imu.dmpSetTap(200, 200, zThresh, taps, tapTime, tapMulti))
     haltError(3, code);
 
   Serial.println("Imu Begin");
@@ -387,22 +387,22 @@ void loop() {
     RGB(1,0,0);
     Serial.println("BLE Should be OFF");
     tapfi.disconnect();
-    tapfiOn=false;
     cAuthorize.setValue(nAuth);
+    tapfiOn=false;
   }
   // Read taps and record them to check
   readTap(true);
   //Check if there was a double-tap event
   if(didDoubleTap()){
     RGB();
-    userAlert(1,500,0,0,1,0);
+    tapfi.poll();
+    userAlert(1,500,1,0,1,0);
     Serial.println("BLE Should be ON");
     tapfiOn=true;
     timeOn=millis();
     RGB(0,1,0);
     // Awaits for connection with a certain TIMEOUT
     while(millis() - timeOn < CONNECTION_TIMEOUT){
-      tapfi.poll();
       didConnect();
     }
   }
@@ -431,5 +431,9 @@ void didConnect(){
         }
       }
     }
+    //tapfi.disconnect();
   }
+  // else{
+  //   tapfi.disconnect();
+  // }
 }
