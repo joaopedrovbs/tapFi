@@ -22,7 +22,7 @@ BLEDiscovery.init = () => {
 }
 
 BLEDiscovery.discoveryCallback = (peripheral) => {
-  // console.log(TAG, chalk.yellow(peripheral.advertisement.localName))
+  console.log(TAG, chalk.yellow(peripheral.advertisement.localName))
 
   let parsedPeripheral = BLEDiscovery.parsePeripheral(peripheral)
   app.controllers.ConManager.deviceDetected(parsedPeripheral)

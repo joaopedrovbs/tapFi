@@ -1,6 +1,6 @@
 exports.NOT_ENOUGH_MONEY               = 'NeM'
 
-exports.PAYMENT_TIMEOUT_MS             = 9000
+exports.PAYMENT_TIMEOUT_MS             = 30000
 exports.DEFAULT_TIMEOUT_MS             = 5000
 
 exports.SERVICE_INFO_UUID              = '1823'

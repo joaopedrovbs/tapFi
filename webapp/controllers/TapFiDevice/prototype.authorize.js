@@ -63,7 +63,7 @@ module.exports = function authorize(value, destination, next) {
 
       // Subscribe for changes
       characAuth.subscribe(next)
-    }, CONSTS.DEFAULT_TIMEOUT_MS * 2),
+    }, CONSTS.DEFAULT_TIMEOUT_MS * 2, 'Could not subscribe to `auth`'),
 
     // Write the ammount and Wait Authorization. (Wrapped in a Timeout call)
     async.timeout((next) => {
