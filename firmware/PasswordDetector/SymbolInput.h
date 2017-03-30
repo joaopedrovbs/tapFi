@@ -22,7 +22,7 @@ enum SymbolType {
  * A SymbolInput is both the representation of the symbol itself,
  * and the moment is appeared (milliseconds since start of first symbol)
  */
-typedef SymbolInput {
+typedef struct{
   // Type of symbol
   SymbolType type;
 
@@ -32,6 +32,6 @@ typedef SymbolInput {
 
   // Used internally in the algorithm to detect if a match has been found 
   bool matched;
-};
+}SymbolInput ;
 
 #endif

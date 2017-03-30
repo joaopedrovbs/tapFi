@@ -1,7 +1,7 @@
 #include <LinkedList.h>
 #include "SymbolInput.h"
 #include "MatchSequence.h"
-#include "SequenceInput.h"
+#include "SymbolInput.h"
 #include "PasswordSequence.h"
 
 
