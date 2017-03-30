@@ -72,6 +72,7 @@ BLECharacteristic cName = BLECharacteristic("fff1", BLEBroadcast | BLERead /*| B
 BLECharacteristic cDomain = BLECharacteristic("aaa1", BLEBroadcast | BLERead /*| BLEWrite*/, domain);
 BLEFloatCharacteristic cAmount = BLEFloatCharacteristic("bbb1", BLEWrite);
 BLECharacteristic cAuthorize = BLECharacteristic("ccc1", BLERead | BLENotify | BLEIndicate | BLEBroadcast, 20);
+BLECharacteristic signature = BLECharacteristic("ccc2", BLERead | BLENotify | BLEIndicate | BLEBroadcast, 20);
  
 // Create one or more descriptors
 BLEDescriptor dName = BLEDescriptor("2901", "name");
@@ -281,6 +282,16 @@ bool passwordCheck(int retries){
   return false;
 }
 
+void longWrite(){
+  signature.setValue("1 PRIMEIRO VALOR");
+  signature.setValue("2 SEGUNDO VALOR");
+  signature.setValue("3 TERCEIRO VALOR");
+  signature.setValue("4 QUARTO VALOR");
+  signature.setValue("5 QUINTO VALOR");
+  signature.setValue("6 QUINTO VALOR");
+  signature.setValue("");
+}
+
 
 void setup() {
   // Serial Initialization
@@ -415,13 +426,16 @@ void didConnect(){
     timeConnected=millis();
     while (central.connected() && millis() - timeConnected < CONNECTION_TIMEOUT) { 
       if(cAmount.written()){
+        longWrite();
         Serial.print("Amount is: ");
         Serial.println(cAmount.value());
         if(maxValue - cAmount.value() >= 0 && (float) cAmount.value() > 0 && passwordCheck(3)){
           Serial.print("Key written: ");
           Serial.println(key);
           cAuthorize.setValue(key);
-          cAuthorize.canNotify();
+
+
+
           tapfi.disconnect();
           break;
         }
