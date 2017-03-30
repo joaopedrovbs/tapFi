@@ -46,6 +46,7 @@ extern "C" {
 #include <stdarg.h>
 
 void logString(char * string);
+int _MLPrintInt (int data);
 int _MLPrintLog (int priority, const char* tag, const char* fmt, ...);
 void eMPL_send_quat(long *quat);
 void eMPL_send_data(unsigned char type, long *data);

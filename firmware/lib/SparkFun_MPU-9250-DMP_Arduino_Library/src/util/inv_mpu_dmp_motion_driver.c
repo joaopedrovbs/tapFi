@@ -1032,11 +1032,11 @@ int dmp_enable_feature(unsigned short mask)
         dmp_set_tap_axes(TAP_XYZ);
         dmp_set_tap_count(1);
         dmp_set_tap_time(100);
-        dmp_set_tap_time_multi(500);
+        dmp_set_tap_time_multi(0);
 
-        dmp_set_shake_reject_thresh(GYRO_SF, 200);
-        dmp_set_shake_reject_time(40);
-        dmp_set_shake_reject_timeout(10);
+        dmp_set_shake_reject_thresh(GYRO_SF, 150);
+        dmp_set_shake_reject_time(30);
+        dmp_set_shake_reject_timeout(20);
     } else {
         tmp[0] = 0xD8;
         mpu_write_mem(CFG_20, 1, tmp);
@@ -1241,8 +1241,9 @@ int dmp_read_fifo(short *gyro, short *accel, long *quat,
     sensors[0] = 0;
 
     /* Get a packet. */
-    if (mpu_read_fifo_stream(dmp.packet_length, fifo_data, more))
-        return -1;
+    int code;
+    if (code = mpu_read_fifo_stream(dmp.packet_length, fifo_data, more))
+        return code;
 
     /* Parse DMP packet. */
     if (dmp.feature_mask & (DMP_FEATURE_LP_QUAT | DMP_FEATURE_6X_LP_QUAT)) {

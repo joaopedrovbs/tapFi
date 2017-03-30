@@ -1,29 +1,14 @@
-/************************************************************
-MPU9250_Basic
- Basic example sketch for MPU-9250 DMP Arduino Library 
-Jim Lindblom @ SparkFun Electronics
-original creation date: November 23, 2016
-https://github.com/sparkfun/SparkFun_MPU9250_DMP_Arduino_Library
-
-This example sketch demonstrates how to initialize the 
-MPU-9250, and stream its sensor outputs to a serial monitor.
-
-Development environment specifics:
-Arduino IDE 1.6.12
-SparkFun 9DoF Razor IMU M0
-
-Supported Platforms:
-- ATSAMD21 (Arduino Zero, SparkFun SAMD21 Breakouts)
-*************************************************************/
 #include <SparkFunMPU9250-DMP.h>
 
-#define SerialPort SerialUSB
+#define SerialPort Serial
 
 MPU9250_DMP imu;
 
 void setup() 
 {
   SerialPort.begin(115200);
+  delay(1000);
+  SerialPort.println("\n\n\n====== START ======");
 
   // Call imu.begin() to verify communication with and
   // initialize the MPU-9250 to it's default values.
@@ -45,7 +30,7 @@ void setup()
   // INV_XYZ_GYRO, INV_XYZ_ACCEL, INV_XYZ_COMPASS,
   // INV_X_GYRO, INV_Y_GYRO, or INV_Z_GYRO
   // Enable all sensors:
-  imu.setSensors(INV_XYZ_GYRO | INV_XYZ_ACCEL | INV_XYZ_COMPASS);
+  imu.setSensors(INV_XYZ_GYRO | INV_XYZ_ACCEL);
 
   // Use setGyroFSR() and setAccelFSR() to configure the
   // gyroscope and accelerometer full scale ranges.
@@ -60,11 +45,11 @@ void setup()
   // of the accelerometer and gyroscope.
   // Can be any of the following: 188, 98, 42, 20, 10, 5
   // (values are in Hz).
-  imu.setLPF(5); // Set LPF corner frequency to 5Hz
+  imu.setLPF(10); // Set LPF corner frequency to 5Hz
 
   // The sample rate of the accel/gyro can be set using
   // setSampleRate. Acceptable values range from 4Hz to 1kHz
-  imu.setSampleRate(10); // Set sample rate to 10Hz
+  imu.setSampleRate(100); // Set sample rate to 10Hz
 
   // Likewise, the compass (magnetometer) sample rate can be
   // set using the setCompassSampleRate() function.
@@ -86,7 +71,7 @@ void loop()
     // UPDATE_TEMPERATURE.
     // (The update function defaults to accel, gyro, compass,
     //  so you don't have to specify these values.)
-    imu.update(UPDATE_ACCEL | UPDATE_GYRO | UPDATE_COMPASS);
+    imu.update(UPDATE_ACCEL | UPDATE_GYRO);
     printIMUData();
   }
 }
@@ -106,17 +91,12 @@ void printIMUData(void)
   float gyroX = imu.calcGyro(imu.gx);
   float gyroY = imu.calcGyro(imu.gy);
   float gyroZ = imu.calcGyro(imu.gz);
-  float magX = imu.calcMag(imu.mx);
-  float magY = imu.calcMag(imu.my);
-  float magZ = imu.calcMag(imu.mz);
-  
-  SerialPort.println("Accel: " + String(accelX) + ", " +
-              String(accelY) + ", " + String(accelZ) + " g");
-  SerialPort.println("Gyro: " + String(gyroX) + ", " +
-              String(gyroY) + ", " + String(gyroZ) + " dps");
-  SerialPort.println("Mag: " + String(magX) + ", " +
-              String(magY) + ", " + String(magZ) + " uT");
-  SerialPort.println("Time: " + String(imu.time) + " ms");
-  SerialPort.println();
+
+
+  if(abs((accelZ*1000)-1000) >= 500){
+    Serial.print("Accel Z: ");
+    Serial.println(String(accelZ*1000));
+  }
+
 }
 

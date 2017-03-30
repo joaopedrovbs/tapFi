@@ -421,11 +421,11 @@ inv_error_t MPU9250_DMP::dmpUpdateFifo(void)
 	unsigned long timestamp;
 	short sensors;
 	unsigned char more;
-	
-	if (dmp_read_fifo(gyro, accel, quat, &timestamp, &sensors, &more)
-		   != INV_SUCCESS)
+	int code;
+
+	if (code = dmp_read_fifo(gyro, accel, quat, &timestamp, &sensors, &more))
     {
-	   return INV_ERROR;
+	   return code;
     }
 	
 	if (sensors & INV_XYZ_ACCEL)
@@ -505,7 +505,7 @@ inv_error_t MPU9250_DMP::dmpSetTap(
 		return INV_ERROR;
 	if (dmp_set_tap_time_multi(tapMulti) != INV_SUCCESS)
 		return INV_ERROR;
-	
+
     dmp_register_tap_cb(tap_cb);
 	
 	return INV_SUCCESS;

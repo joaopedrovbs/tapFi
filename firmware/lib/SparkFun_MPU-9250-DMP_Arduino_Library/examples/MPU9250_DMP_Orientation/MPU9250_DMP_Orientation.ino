@@ -17,7 +17,7 @@ Supported Platforms:
 *************************************************************/
 #include <SparkFunMPU9250-DMP.h>
 
-#define SerialPort SerialUSB
+#define SerialPort Serial
 
 MPU9250_DMP imu;
 
@@ -35,7 +35,8 @@ unsigned char lastOrient = 0;
 void setup() 
 {
   SerialPort.begin(115200);
-
+  delay(1000);
+  SerialPort.println("\n\n\n====== START ======");
   // Call imu.begin() to verify communication and initialize
   if (imu.begin() != INV_SUCCESS)
   {

@@ -44,6 +44,7 @@
 #define i2c_read(a, b, c, d)  arduino_i2c_read(a, b, c, d)
 #define delay_ms  arduino_delay_ms
 #define get_ms    arduino_get_clock_ms
+#define log_int   _MLPrintInt
 #define log_i     _MLPrintLog
 #define log_e     _MLPrintLog 
 static inline int reg_int_cb(struct int_param_s *int_param)
@@ -719,6 +720,7 @@ int mpu_init(struct int_param_s *int_param)
 #endif
 
     mpu_set_sensors(0);
+
     return 0;
 }
 
@@ -1751,24 +1753,24 @@ int mpu_read_fifo_stream(unsigned short length, unsigned char *data,
         return -1;
 
     if (i2c_read(st.hw->addr, st.reg->fifo_count_h, 2, tmp))
-        return -1;
+        return 22;
     fifo_count = (tmp[0] << 8) | tmp[1];
     if (fifo_count < length) {
         more[0] = 0;
-        return -1;
+        return 23;
     }
     if (fifo_count > (st.hw->max_fifo >> 1)) {
         /* FIFO is 50% full, better check overflow bit. */
         if (i2c_read(st.hw->addr, st.reg->int_status, 1, tmp))
-            return -1;
+            return 25;
         if (tmp[0] & BIT_FIFO_OVERFLOW) {
             mpu_reset_fifo();
-            return -2;
+            return 26;
         }
     }
 
     if (i2c_read(st.hw->addr, st.reg->fifo_r_w, length, data))
-        return -1;
+        return 27;
     more[0] = fifo_count / length - 1;
     return 0;
 }
@@ -2727,6 +2729,7 @@ int mpu_write_mem(unsigned short mem_addr, unsigned short length,
 
     if (i2c_write(st.hw->addr, st.reg->bank_sel, 2, tmp))
         return -1;
+    delay(1);
     if (i2c_write(st.hw->addr, st.reg->mem_r_w, length, data))
         return -1;
     return 0;
@@ -2791,12 +2794,22 @@ int mpu_load_firmware(unsigned short length, const unsigned char *firmware,
         
     for (ii = 0; ii < length; ii += this_write) {
         this_write = min(LOAD_CHUNK, length - ii);
+        
         if (mpu_write_mem(ii, this_write, (unsigned char*)&firmware[ii]))
             return 12;
+        
         if (mpu_read_mem(ii, this_write, cur))
             return 13;
-        if (memcmp(firmware+ii, cur, this_write))
+        
+        for(int z = 0; z < this_write; z++){
+            // log_i(15, "mpu_load_firmware", "COMP");
+            // log_int(firmware[ii + z]);
+            // log_int(cur[z + 1]);
+        }
+        if (memcmp(firmware + ii, cur, this_write))
             return 14;
+            
+
     }
 
     /* Set program start address. */
@@ -2869,7 +2882,7 @@ static int setup_compass(void)
     mpu_set_bypass(1);
 
     /* Find compass. Possible addresses range from 0x0C to 0x0F. */
-    for (akm_addr = 0x0C; akm_addr <= 0x0F; akm_addr++) {
+    for (akm_addr = 0x09; akm_addr <= 0x0F; akm_addr++) {
         int result;
         result = i2c_read(akm_addr, AKM_REG_WHOAMI, 1, data);
         if (!result && (data[0] == AKM_WHOAMI))

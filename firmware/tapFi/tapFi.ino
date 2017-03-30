@@ -369,7 +369,7 @@ void setup() {
     haltError(2, code);
 
   // Tap Parameters
-  unsigned short zThresh = 200;   // Set z-axis tap thresh to 100 mg/ms
+  unsigned short zThresh = 180;   // Set z-axis tap thresh to 100 mg/ms
   unsigned char taps = 1;         // Set minimum taps to 1
   unsigned short tapTime = 100;   // Set tap time to 100ms
   unsigned short tapMulti = 100; // Set multi-tap time to 1s

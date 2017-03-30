@@ -32,8 +32,18 @@ void logString(char * string)
 {
 }
 
+int _MLPrintInt (int data) {
+	Serial.println(data);
+}
+
 int _MLPrintLog (int priority, const char* tag, const char* fmt, ...)
 {
+	Serial.print("[");
+	Serial.print(priority);
+	Serial.print("] ");
+	Serial.print(tag);
+	Serial.print(" | ");
+	Serial.println(fmt);
 }
 
 void eMPL_send_quat(long *quat)
