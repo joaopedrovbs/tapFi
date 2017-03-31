@@ -12,7 +12,7 @@
 #include "PasswordSequence.h"
 #include <SparkFunMPU9250-DMP.h>
 
-//#define TAPFI_DEBUG
+#define TAPFI_DEBUG
 
 // Stored Double Tap Timing
 int doubleTap[] = {
@@ -74,14 +74,12 @@ BLECharacteristic cName = BLECharacteristic("fff1", BLEBroadcast | BLERead /*| B
 BLECharacteristic cDomain = BLECharacteristic("aaa1", BLEBroadcast | BLERead /*| BLEWrite*/, domain);
 BLEFloatCharacteristic cAmount = BLEFloatCharacteristic("bbb1", BLEWrite);
 BLECharacteristic cAuthorize = BLECharacteristic("ccc1", BLERead | BLENotify | BLEIndicate | BLEBroadcast, 20);
-BLECharacteristic cSignature = BLECharacteristic("ccc2", BLERead | BLENotify | BLEIndicate | BLEBroadcast, 20);
  
 // Create one or more descriptors
 BLEDescriptor dName = BLEDescriptor("2901", "name");
 BLEDescriptor dDomain = BLEDescriptor("2901", "domain");
 BLEDescriptor dAmount = BLEDescriptor("2901", "amount");
 BLEDescriptor dAuthorize = BLEDescriptor("2901", "authorize");
-BLEDescriptor dSignature = BLEDescriptor("2901", "authorize");
 
 // Instantiate Password Sequences
 PasswordSequence tapPattern;
@@ -307,41 +305,6 @@ bool passwordCheck(int retries){
   return false;
 }
 
-void longWrite(){
-  cSignature.setValue("1 PRIMEIRO VALOR");
-  cSignature.setValue("2 SEGUNDO VALOR");
-  cSignature.setValue("3 TERCEIRO VALOR");
-  cSignature.setValue("4 QUARTO VALOR");
-  cSignature.setValue("5 QUINTO VALOR");
-  cSignature.setValue("6 QUINTO VALOR");
-  cSignature.setValue("");
-}
-
-char input[128];
-void longRead(){
-  int offset = 0;
-  unsigned long start = millis()
-  // While not full, not timedout
-  while(offset < 128 && millis() - start < 500) {
-    if (signature.written()) {
-      int len = signature.valueLength()
-
-      // Stop if empty
-      if (len == 0) {
-        break;
-      }
-      Serial.print("GOT [part]: ")
-      Serial.println(signature.value());
-      memcpy(input + offset, signature.value(), len);
-      offset += len;
-    }
-  }
-  input[offset + 1] = '\0';
-
-  Serial.print("GOT [all]: ")
-  Serial.println(input);
-}
-
 
 void setup() {
   // Serial Initialization
@@ -389,9 +352,6 @@ void setup() {
   tapfi.addAttribute(dAmount);
   tapfi.addAttribute(cAuthorize);
   tapfi.addAttribute(dAuthorize);
-  tapfi.addAttribute(cSignature);
-  tapfi.addAttribute(dSignature);
-
 
   //Starts the radio and the device
   tapfi.begin();
@@ -450,35 +410,12 @@ void setup() {
   #endif
 } // End Setup
 
+void stateMachine(short state){
+
+}
+
 void loop() {
-  //
-  if(tapfiOn){
-    RGB(1,0,0);
-    #ifdef TAPFI_DEBUG
-      Serial.println("BLE Should be OFF");
-    #endif
-    tapfi.disconnect();
-    cAuthorize.setValue(nAuth);
-    tapfiOn=false;
-  }
-  // Read taps and record them to check
-  readTap();
-  //Check if there was a double-tap event
-  if(didDoubleTap()){
-    RGB();
-    tapfi.poll();
-    userAlert(1,500,1,0,1,0);
-    #ifdef TAPFI_DEBUG
-      Serial.println("BLE Should be ON");
-    #endif
-    tapfiOn=true;
-    timeOn=millis();
-    RGB(0,1,0);
-    // Awaits for connection with a certain TIMEOUT
-    while(millis() - timeOn < CONNECTION_TIMEOUT){
-      didConnect();
-    }
-  }
+  stateMachine();
 }
 
 //Check for connection from Central, do value checking and exchange 
@@ -488,7 +425,6 @@ void didConnect(){
     timeConnected=millis();
     while (central.connected() && millis() - timeConnected < CONNECTION_TIMEOUT) { 
       if(cAmount.written()){
-          longWrite();
         #ifdef TAPFI_DEBUG
           Serial.print("Amount is: ");
           Serial.println(cAmount.value());
@@ -499,12 +435,13 @@ void didConnect(){
             Serial.println(key);
           #endif
           cAuthorize.setValue(key);
+          cAuthorize.canNotify();
           tapfi.disconnect();
           break;
         }
         else{
           cAuthorize.setValue(nOK);
-          //tapfi.disconnect();
+          tapfi.disconnect();
           break;
         }
       }
