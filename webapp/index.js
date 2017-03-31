@@ -59,5 +59,5 @@ async.mapSeries(setupSteps, (file, next) => require(file)(app, next), err => {
 
   // Launch main window
   app.controllers.MainWindow.launch()
-  app.controllers.BarcodeDecoder.launch()
+  // app.controllers.BarcodeDecoder.launch()
 })

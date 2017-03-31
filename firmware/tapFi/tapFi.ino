@@ -292,6 +292,31 @@ void longWrite(){
   signature.setValue("");
 }
 
+char input[128];
+void longRead(){
+  int offset = 0;
+  unsigned long start = millis()
+  // While not full, not timedout
+  while(offset < 128 && millis() - start < 500) {
+    if (signature.written()) {
+      int len = signature.valueLength()
+
+      // Stop if empty
+      if (len == 0) {
+        break;
+      }
+      Serial.print("GOT [part]: ")
+      Serial.println(signature.value());
+      memcpy(input + offset, signature.value(), len);
+      offset += len;
+    }
+  }
+  input[offset + 1] = '\0';
+
+  Serial.print("GOT [all]: ")
+  Serial.println(input);
+}
+
 
 void setup() {
   // Serial Initialization
