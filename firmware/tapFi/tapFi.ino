@@ -11,8 +11,9 @@
 #include "SymbolInput.h"
 #include "PasswordSequence.h"
 #include <SparkFunMPU9250-DMP.h>
+#include <ed25519.h>
 
-//#define TAPFI_DEBUG
+#define TAPFI_DEBUG
 
 // Stored Double Tap Timing
 int doubleTap[] = {
@@ -38,23 +39,23 @@ int password[] = {
 #define SW2 18
 
 // Timeouts
-#define CONNECTION_TIMEOUT 20000  //Timeout for connection  
+#define CONNECTION_TIMEOUT 15000  //Timeout for connection  
 #define PASSWORDENTER_TIMEOUT 5000  //Timeout for password  
 #define PASSWORDTYPE_TIMEOUT 3000  //Timeout for password  
 #define TAP_TIMEOUT 1200   //Timeout for Taps
+
+#define CHARACTERISTIC_MAX_SIZE 20
 
 // Set Ripple as Manufacturer Data
 const unsigned char manufacturerData[6] = {0x52, 0x69, 0x70, 0x70, 0x6c, 0x65}; 
 const char * name = "admin";
 const char * domain = "john.jpvbs.com";
-const char * key = "johnadmin";
-const char * nAuth = "NOK";
-const char * nOK = "NeM";
-float maxValue = 50;
+
+//Crypto libraries
+unsigned char public_key[32], seed[32], signature[64], private_key[64];
 
 // Flags for toggling the system
 bool tapfiOn = true;
-bool connected = false;
 
 // Longs for Timeout and Debouncing
 unsigned long timeConnected = 0;   
@@ -72,16 +73,14 @@ BLEService service = BLEService("1823");
 // Create The characteristics
 BLECharacteristic cName = BLECharacteristic("fff1", BLEBroadcast | BLERead /*| BLEWrite*/, name);
 BLECharacteristic cDomain = BLECharacteristic("aaa1", BLEBroadcast | BLERead /*| BLEWrite*/, domain);
-BLEFloatCharacteristic cAmount = BLEFloatCharacteristic("bbb1", BLEWrite);
-BLECharacteristic cAuthorize = BLECharacteristic("ccc1", BLERead | BLENotify | BLEIndicate | BLEBroadcast, 20);
+BLECharacteristic cAmount = BLECharacteristic("bbb1", BLEWrite, 20);
 BLECharacteristic cSignature = BLECharacteristic("ccc2", BLERead | BLENotify | BLEIndicate | BLEBroadcast, 20);
  
 // Create one or more descriptors
 BLEDescriptor dName = BLEDescriptor("2901", "name");
 BLEDescriptor dDomain = BLEDescriptor("2901", "domain");
 BLEDescriptor dAmount = BLEDescriptor("2901", "amount");
-BLEDescriptor dAuthorize = BLEDescriptor("2901", "authorize");
-BLEDescriptor dSignature = BLEDescriptor("2901", "authorize");
+BLEDescriptor dSignature = BLEDescriptor("2901", "signature");
 
 // Instantiate Password Sequences
 PasswordSequence tapPattern;
@@ -107,7 +106,7 @@ void userAlert(short rep, short duration_ms, bool motor = true, bool r = false, 
     if (motor){
       digitalWrite(RUMBLE, LOW);
     }
-    RGB(r, g, b);
+    RGB();
     delay(duration_ms);
   }
 }
@@ -239,7 +238,7 @@ void readPassword(void){
   passwordEntered.list.clear();
 
   // Wait timeout millis() - lastTap < PASSWORD_TIMEOUT
-  while(passwordEntered.list.size() < sizeof(password)/ sizeof(int) || millis() - lastTap > PASSWORDENTER_TIMEOUT){
+  while(passwordEntered.list.size() < sizeof(password)/ sizeof(int)){
     if (tapped()){
       // It will account for current time and create SymbolInput automatically
       passwordEntered.addSymbol(TAP);
@@ -266,7 +265,7 @@ bool didPassword(){
   // Compare passwords
   float thrust = MatchSequence(&passwordSaved, &passwordEntered, params);
   #ifdef TAPFI_DEBUG
-  Serial.print("Thrust 2: \033[34m");
+  Serial.print("Password Thrust: \033[34m");
   Serial.print(thrust);
   Serial.println("\033[0m");
   #endif
@@ -303,20 +302,86 @@ bool passwordCheck(int retries){
       userAlert(2,500,1,1,1,0);
     }
   }
-
   return false;
 }
 
 void longWrite(){
-  cSignature.setValue("1 PRIMEIRO VALOR");
-  cSignature.setValue("2 SEGUNDO VALOR");
-  cSignature.setValue("3 TERCEIRO VALOR");
-  cSignature.setValue("4 QUARTO VALOR");
-  cSignature.setValue("5 QUINTO VALOR");
-  cSignature.setValue("6 QUINTO VALOR");
+  cSignature.setValue(signature+0, CHARACTERISTIC_MAX_SIZE);
+  cSignature.setValue(signature+20, CHARACTERISTIC_MAX_SIZE);
+  cSignature.setValue(signature+40, CHARACTERISTIC_MAX_SIZE);
+  cSignature.setValue(signature+60,4);
   cSignature.setValue("");
+  #ifdef TAPFI_DEBUG
+    Serial.println("Signature Written!");
+  #endif
 }
 
+
+void generateKeys(void){
+  ed25519_create_seed(seed);
+  ed25519_create_keypair(public_key, private_key, seed);
+  #ifdef TAPFI_DEBUG
+    Serial.print("Public Key Size: ");
+    Serial.println(sizeof(public_key));
+    Serial.println("Public Key:");
+    for (int i = 0; i < sizeof(public_key); i++){
+      Serial.print(public_key[i],HEX);
+    }
+    Serial.println();
+  #endif
+}
+
+void sign(){
+  //const unsigned char message[] = "Hello, world!";
+  unsigned const char* message = cAmount.value();
+  const int message_len = sizeof(message);
+  ed25519_sign(signature, message, message_len, public_key, private_key);
+  #ifdef TAPFI_DEBUG
+  //   Serial.print("Message: ");
+  //   Serial.println(message);
+    Serial.print("Message Size: ");
+    Serial.println(sizeof(message));
+    Serial.print("Signature: ");
+    Serial.println(sizeof(signature));
+    for (int i = 0; i < sizeof(signature); i++){
+      if(signature[i] < 16){
+        Serial.print("0");
+        Serial.print(signature[i],HEX);
+      }
+      else{
+        Serial.print(signature[i],HEX);
+      }
+      Serial.print(" ");
+    }
+    Serial.println();
+  #endif
+
+}
+
+// char input[128];
+
+// void longRead(){
+//   int offset = 0;
+//   unsigned long start = millis();
+//   // While not full, not timedout
+//   while(offset < 128 && millis() - start < 500) {
+//     if (cSignature.written()) {
+//       int len = cSignature.valueLength();
+//       // Stop if empty
+//       if (len == 0) {
+//         break;
+//       }
+//       Serial.print("GOT [part]: ");
+//       Serial.println(cSignature.value());
+//       memcpy(input + offset, cSignature.value(), len);
+//       offset += len;
+//     }
+//   }
+//   input[offset + 1] = '\0';
+
+//   Serial.print("GOT [all]: ");
+//   Serial.println(input);
+// }
 
 void setup() {
   // Serial Initialization
@@ -356,14 +421,16 @@ void setup() {
   
   // Add attributes (services, characteristics, descriptors) to peripheral
   tapfi.addAttribute(service);
+
   tapfi.addAttribute(cName);
   tapfi.addAttribute(dName);
+
   tapfi.addAttribute(cDomain);
   tapfi.addAttribute(dDomain);
+
   tapfi.addAttribute(cAmount);
   tapfi.addAttribute(dAmount);
-  tapfi.addAttribute(cAuthorize);
-  tapfi.addAttribute(dAuthorize);
+
   tapfi.addAttribute(cSignature);
   tapfi.addAttribute(dSignature);
 
@@ -372,7 +439,8 @@ void setup() {
   tapfi.begin();
   #ifdef TAPFI_DEBUG
     Serial.println("TapFi Begin");
-  #endif  
+  #endif
+    generateKeys();
   // Load Saved Tap Pattern
   unsigned long totalTime = 0;
   for (unsigned int i = 0 ; i < sizeof(doubleTap) / sizeof(int) ; i++) {
@@ -433,7 +501,6 @@ void loop() {
       Serial.println("BLE Should be OFF");
     #endif
     tapfi.disconnect();
-    cAuthorize.setValue(nAuth);
     tapfiOn=false;
   }
   // Read taps and record them to check
@@ -442,44 +509,31 @@ void loop() {
   if(didDoubleTap()){
     RGB();
     tapfi.poll();
-    userAlert(1,500,1,0,1,0);
+    userAlert(1,500,1,0,0,0);
     #ifdef TAPFI_DEBUG
       Serial.println("BLE Should be ON");
     #endif
+    RGB(0,1,0);
     tapfiOn=true;
     timeOn=millis();
-    RGB(0,1,0);
     // Awaits for connection with a certain TIMEOUT
     while(millis() - timeOn < CONNECTION_TIMEOUT){
-      didConnect();
+      onConnect();
     }
   }
 }
 
 //Check for connection from Central, do value checking and exchange 
-void didConnect(){
+void onConnect(){
  BLECentral central = tapfi.central();
   if(central){
     timeConnected=millis();
     while (central.connected() && millis() - timeConnected < CONNECTION_TIMEOUT) { 
       if(cAmount.written()){
+        Serial.println("Amount Written!");
+        if(passwordCheck(3)){
+          sign();
           longWrite();
-        #ifdef TAPFI_DEBUG
-          Serial.print("Amount is: ");
-          Serial.println(cAmount.value());
-        #endif
-        if(maxValue - cAmount.value() >= 0 && (float) cAmount.value() > 0 && passwordCheck(3)){
-          #ifdef TAPFI_DEBUG
-            Serial.print("Key written: ");
-            Serial.println(key);
-          #endif
-          cAuthorize.setValue(key);
-          tapfi.disconnect();
-          break;
-        }
-        else{
-          cAuthorize.setValue(nOK);
-          //tapfi.disconnect();
           break;
         }
       }
