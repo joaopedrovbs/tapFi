@@ -1,22 +1,18 @@
 const CONSTS = require('./CONSTS')
-const IlpPacket = require('ilp-packet')
 
 /*
  * Requests an authentication key for the specified conditional payment.
  * Will return with the authentication key, or "null" if it didn't authorized
  */
 module.exports = function authorize(value, destination, next) {
-  let characAuth, characValue, authorization
+  let characAuth, characValue, characSignature, characPublickey, authorization
   let packet, condition, fullPacket
+  let onSignature, onPublickey
+  let signature, publickey
 
-  packet = IlpPacket.serializeIlpPayment({
-    amount: (value * 100).toString(),
-    account: destination,
-    data: ''
-  })
-
-  console.log(this.TAG, 'Packet', packet.toString('hex'))
-
+  // Generate IPR for it
+  let ipr = this.makeIPR(value, destination)
+  
   // If device is already connected, will not disconnect on the end of process
   let shouldDisconnect = ( this.device.state == 'disconnected' )
 
@@ -47,11 +43,13 @@ module.exports = function authorize(value, destination, next) {
     // Get characteristics
     (info, next) => {
       log(this.TAG, 'getting characteristics...')
-      characAuth  = this.getCharacteristic(CONSTS.SERVICE_PAY_UUID, CONSTS.SERVICE_PAY_AUTHORIZE_UUID)
-      characValue = this.getCharacteristic(CONSTS.SERVICE_PAY_UUID, CONSTS.SERVICE_PAY_VALUE_UUID)
+      characAuth      = this.getCharacteristic(CONSTS.SERVICE_PAY_UUID, CONSTS.SERVICE_PAY_AUTHORIZE_UUID)
+      characValue     = this.getCharacteristic(CONSTS.SERVICE_PAY_UUID, CONSTS.SERVICE_PAY_VALUE_UUID)
+      characSignature = this.getCharacteristic(CONSTS.SERVICE_PAY_UUID, CONSTS.SERVICE_PAY_SIGNATURE_UUID)
+      characPublickey = this.getCharacteristic(CONSTS.SERVICE_PAY_UUID, CONSTS.SERVICE_PAY_SIGNATURE_UUID)
 
       // Check they exist
-      if (!characAuth || !characValue)
+      if (!characAuth || !characValue || !characSignature || characPublickey)
         return next('Some characteristics were not found.')
       
       next(null)
@@ -59,11 +57,30 @@ module.exports = function authorize(value, destination, next) {
 
     // Subscribe to notification on Auth
     async.timeout((next) => {
-      log(this.TAG, 'subscribing...')
+      console.log(this.TAG, 'subscribing...')
 
       // Subscribe for changes
       characAuth.subscribe(next)
     }, CONSTS.DEFAULT_TIMEOUT_MS * 2, 'Could not subscribe to `auth`'),
+
+
+    (next) => async.parallel([
+      // DEBUG: Signature subscribe
+      (next) => {
+        if (!ENABLE_SIGNATURE) return next();
+
+        console.log(this.TAG, 'subscribing to signature')
+        onSignature = this.readLongCharacteristic(characSignature, next)
+      },
+
+      // DEBUG: Publickey subscribe
+      (next) => {
+        if (!ENABLE_SIGNATURE) return next();
+
+        console.log(this.TAG, 'subscribing to publickey')
+        onPublickey = this.readLongCharacteristic(characPublickey, next)
+      },
+    ], next)
 
     // Write the ammount and Wait Authorization. (Wrapped in a Timeout call)
     async.timeout((next) => {
@@ -82,6 +99,14 @@ module.exports = function authorize(value, destination, next) {
 
       // Write value
       characValue.write(valueBuffer, false)
+
+      onSignature((err, token) => {
+        console.log('onSignature', err, token.toString())
+      })
+
+      onPublickey((err, token) => {
+        console.log('onPublickey', err, token.toString())
+      })
 
     }, CONSTS.PAYMENT_TIMEOUT_MS, 'Could not Authorize. Timeout occurred'),
 
