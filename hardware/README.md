@@ -10,7 +10,7 @@ At this folder you'll find all the hardware parts, what to buy and how to connec
 
 #### The list for all the parts used in the prototype and their links can be found [here](https://docs.google.com/spreadsheets/d/1pxn552UrJLPFjxMJo8Y3OLqV407wsjz8_O9QdrBkuIY/edit?usp=sharing).
 
-This Google Spreadsheet is for building the project from Ground Up, the tools and shipping costs to Louxembourg are also included. The parts from TagConnect are the tools that we had to use to flash the ARM microcontroller as it had a proprietary connector. 
+This Google Spreadsheet is for building the project from Ground Up, the tools and shipping costs to Luxembourg are also included. The parts from TagConnect are the tools that we had to use to flash the ARM microcontroller as it had a proprietary connector. 
 
 ## Fitting inside the case
 
