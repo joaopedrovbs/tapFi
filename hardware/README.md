@@ -14,22 +14,22 @@ This Google Spreadsheet is for building the project from Ground Up, the tools an
 
 ## Fitting inside the case
 
-![Inside Case 3d](Fit link here after commit)
+![Inside Case 3d](https://raw.githubusercontent.com/joaopedrovbs/tapFi/master/hardware/images/caseopen.png)
 
-![Inside Real Case](Fit link here after commit)
+![Inside Real Case](https://raw.githubusercontent.com/joaopedrovbs/tapFi/master/hardware/images/thingsInside.jpg)
 
 Every component was hot glued to the case for better use while prototyping. 
 
 ## Connections
 
 The connections are laid out according to the following pattern:
-- `(MPU9250 Board) **SDA** == **PIN 21** (Beacon Board)`
-- `(MPU9250 Board) **SCL** == **PIN 24** (Beacon Board)`
-- `(MPU9250 Board) **VDD** == **VCC** (Beacon Board)`
-- `(MPU9250 Board) **GND** == **GND** (Beacon Board)`
-- `(Rumble Motor) **RED WIRE** == **PIN 20** (Beacon Board)`
-- `(Rumble Motor) **BLUE WIRE** == **GND** (MPU 9250 Board)`
+- `(MPU9250 Board) VDD == VCC (Beacon Board)`
+- `(MPU9250 Board) GND == GND (Beacon Board)`
+- `(MPU9250 Board) SDA == PIN 21 (Beacon Board)`
+- `(MPU9250 Board) SCL == PIN 24 (Beacon Board)`
+- `(Rumble Motor) BLUE WIRE == GND (MPU 9250 Board)`
+- `(Rumble Motor) RED WIRE == PIN 20 (Beacon Board)`
 
 ## Battery Situation
 
-As the **LOW POWER** functions from the microcontroller are not implemented the CR1632 batteries usually power the system for arround `3 Hours` so it's good to remove the battery every time you finish testing.
+As the **LOW POWER** functions from the microcontroller are not implemented the **CR1632 Battery** usually powers the system for arround `3 Hours` so it's good to remove the battery every time you finish testing.
