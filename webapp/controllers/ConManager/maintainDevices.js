@@ -11,14 +11,15 @@ module.exports = function maintainDevices() {
     let device = ConManager.devices[k]
 
     // Connected devices wont update lastSeen, so we must avoid it by updating lastSeen
-    let isDeviceConnected = device.tapFi.state == 'connected'
+    let isDeviceConnected = device.peripheral.state == 'connected'
     if(isDeviceConnected) {
-      devices.lastSeen = now
+      device.lastSeen = now
     }
 
 
     if (now - device.lastSeen > CONSTS.DISCONNECT_TIMEOUT) {
       // Disconnect device after timeout
+      console.log('Timed out', device.peripheral.state)
       ConManager.remove(device)
     }
   }

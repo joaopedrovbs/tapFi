@@ -54,7 +54,7 @@ module.exports = function handleQueue(task, next) {
     }) 
   } else if (task.task == CONSTS.TASK_PAY) {
     // Execute payment
-    device.tapFi.makePayment(task.value, 'micmic@best-ilp.herokuapp.com', (err) => {
+    device.tapFi.makePayment(task.value, 'admin@john.jpvbs.com', (err) => {
       if (err) {        
         // Set status
         device.status = 'Payment failed.'

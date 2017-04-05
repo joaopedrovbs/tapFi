@@ -26,8 +26,12 @@ export default class PayDialog extends React.Component {
 
     CartState.subscribe(() => {
       // Check if did payment
-      if (CartState.getState().cart.length == 0)
-        this.props.handleClose && this.props.handleClose();
+      if (CartState.getState().cart.length === 0) {
+        setTimeout(() => {
+          this.props.handleClose && this.props.handleClose();
+        }, 3000)
+        this.setState({step: 'DID_PAY'})
+      }
     })
   }
 
@@ -69,17 +73,17 @@ export default class PayDialog extends React.Component {
       //   status: 'found',
       //   timestamp: Date.now(),
       // }
-
       title = 'Looking for tapFi...'
+      let style = { height: 250 }
       content = (
-        <div className="cards">
+        <div className="cards" style={style}>
           {this.state.devices.map((device) => (
             <TapFiUser device={device} key={device.id} onSelect={() => {this.handleSelectDevice(device)}}/> 
           ))}
         </div>
       )
     } else if (this.state.step === 'PAY_WAIT_CONFIRMATION') {
-      let device = this.state.devices.find(d => d.id == this.state.device)
+      let device = this.state.devices.find(d => d.id === this.state.device)
       // If not found, go back
       if (!device) {
         return this.setState({
@@ -93,6 +97,14 @@ export default class PayDialog extends React.Component {
         <div className="cards">
           <TapFiUser device={device} key={device.id} onSelect={() => {}}/> 
         </div>
+      )
+    } else if (this.state.step === 'DID_PAY') {
+      title = 'Complete'
+      content = (
+        <svg className="checkmark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52">
+        <circle className="checkmark__circle" cx="26" cy="26" r="25" fill="none"/>
+        <path className="checkmark__check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/>
+        </svg>
       )
     } else {
       title = 'Invalid'

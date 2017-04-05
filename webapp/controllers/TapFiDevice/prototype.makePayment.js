@@ -13,15 +13,25 @@ module.exports = function makePayment(value, destination, next, completion) {
     (next) => {
       completion && completion('Authorizing...');
       
-      this.authorize(value, destination, next)
+      this.authorizeSignature(value, destination, next)
     },
 
     // With password, make the transfer
-    (authorization, next) => { 
+    (iprHash, signature, publickey, next) => { 
       completion && completion('Transfering...')
 
       // Pull payment from desired account
-      app.helpers.IlpKitApi.makePayment(this.info.acc, authorization, destination, value, next)
+      // app.helpers.IlpKitApi.makePayment(this.info.acc, authorization, destination, value, next)
+      app.helpers.IlpKitApi.makePaymentSignature(iprHash, signature, publickey, next)
+    },
+
+    // Remove device from ConManager
+    (next) => {
+      completion && completion('Complete!')
+
+      app.controllers.ConManager.remove(this)
+      
+      next()
     },
 
   ], next)

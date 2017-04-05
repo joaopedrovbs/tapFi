@@ -6,17 +6,12 @@ const CONSTS = require('./CONSTS')
 module.exports = function finishMaybeDisconnecting(shouldDisconnect, err, callback, ...params) {
   if (shouldDisconnect) {
     // Disconnect first
-    // console.log(this.TAG, 'disconnecting')
     try {
-      this.device.disconnect((next) => {
-        // console.log(this.TAG, 'disconnected')
-        if (err)
-          return callback(err)
-
-        return callback(null, ...params)
+      this.device.disconnect((err) => {
+        return callback(err, ...params)
       })
     } catch (e) {
-      next(null, ...params)
+      callback(err, ...params)
     }
   } else {
     // Skip disconnecting

@@ -15,8 +15,9 @@ module.exports = function makeIPR(value, account) {
   let chop = Buffer.alloc(16)
   hash.copy(chop, 0, 16)
   console.log(this.TAG, 'Packet (chopped):', chop)
+  console.log(this.TAG, 'Packet:', hash)
 
-  return chop
+  return [hash, chop]
 }
 
 // module.exports(10, 'ivanseidel@gmail.com')

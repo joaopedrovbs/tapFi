@@ -1,12 +1,18 @@
 const CONSTS = require('./CONSTS')
+
 /*
  * Requests an authentication key for the specified conditional payment.
  * Will return with the authentication key, or "null" if it didn't authorized
  */
-module.exports = function authorize(value, destination, next) {
-  let characAuth, characValue, authorization
+module.exports = function authorizeSignature(value, destination, next) {
+  let characAuth, characValue, characSignature, characPublickey, authorization
   let packet, condition, fullPacket
+  let onSignature, onPublickey
+  let signature, publickey
 
+  // Generate IPR for it
+  let [iprHash, iprChop] = this.makeIPR(value, destination)
+  
   // If device is already connected, will not disconnect on the end of process
   let shouldDisconnect = false
 
@@ -38,60 +44,62 @@ module.exports = function authorize(value, destination, next) {
     // Get characteristics
     (info, next) => {
       log(this.TAG, 'getting characteristics...')
-      characAuth      = this.getCharacteristic(CONSTS.SERVICE_PAY_UUID, CONSTS.SERVICE_PAY_AUTHORIZE_UUID)
       characValue     = this.getCharacteristic(CONSTS.SERVICE_PAY_UUID, CONSTS.SERVICE_PAY_VALUE_UUID)
+      characSignature = this.getCharacteristic(CONSTS.SERVICE_PAY_UUID, CONSTS.SERVICE_PAY_SIGNATURE_UUID)
 
       // Check they exist
-      if (!characAuth || !characValue)
+      if (!characValue || !characSignature )
         return next('Some characteristics were not found.')
       
       next(null)
     },
 
-    // Subscribe to notification on Auth
-    async.timeout((next) => {
-      console.log(this.TAG, 'subscribing...')
-
-      // Subscribe for changes
-      characAuth.subscribe(next)
-    }, CONSTS.DEFAULT_TIMEOUT_MS * 2, 'Could not subscribe to `auth`'),
+    // DEBUG: Signature subscribe
+    (next) => {
+      console.log(this.TAG, 'subscribing to signature')
+      onSignature = this.readLongCharacteristic(characSignature, next)
+    },
 
     // Write the ammount and Wait Authorization. (Wrapped in a Timeout call)
     async.timeout((next) => {
       log(this.TAG, 'Waiting authentication')
 
-      // Listen for changes in auth characteristic
-      characAuth.once('data', (authKey) => {
-        authorization = authKey.toString()
-        // log(this.TAG, chalk.cyan('new data in AUTH:'), chalk.green(authorization))
-        next(null, authorization)
-      })
-
       // Prepare buffer
-      let valueBuffer = new Buffer(4)
-      valueBuffer.writeFloatLE(value)
+      // let valueBuffer = new Buffer(4)
+      // valueBuffer.writeFloatLE(value)
 
       // Write value
-      characValue.write(valueBuffer, false)
+      characValue.write(iprChop, false)
+      next()
 
     }, CONSTS.PAYMENT_TIMEOUT_MS, 'Could not Authorize. Timeout occurred'),
 
-    // Verify authorization
-    (authorization, next) => {
-      // Check for NotEnoughtMoney
-      if (authorization == CONSTS.NOT_ENOUGH_MONEY) {
-        return next('Refused payment')
-      }
+    (next) => {
+      onSignature((err, token) => {
+        if(err) {
+          return next(err)
+        }
 
+        console.log('onSignature', err, token.toString())
+        signature = token.slice(0, 63)
+        publickey = token.slice(63)
+        next(null, token)
+      })
+    },
+    
+    // Verify signature
+    (authorization, next) => {
+      // Check signature
+      
       // Its ok. Proceed...
       next()
     },
   ], (err) => {
-    log(this.TAG, 'finished', chalk.red(err), authorization && authorization.toString())
+    log(this.TAG, 'finished', chalk.red(err), signature && signature.toString('HEX'))
 
     // Unsubscribe to changes
     characAuth && characAuth.unsubscribe()
 
-    this.finishMaybeDisconnecting(shouldDisconnect, err, next, authorization)
+    this.finishMaybeDisconnecting(shouldDisconnect, err, next, iprHash, signature, publickey)
   })
 }

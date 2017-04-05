@@ -47,7 +47,7 @@ exports.launch = function (){
 
   // Listen for incoming pay request events
   electron.ipcMain.on('pay', (event, deviceId, value) => {
-    console.log(TAG, chalk.cyan('PAY'), chalk.blue(value), chalk.dim(deviceId))
+    console.log(TAG, chalk.cyan('PAID'), chalk.blue(value), chalk.dim(deviceId))
     
     // Add to queue
     let ConManager = app.controllers.ConManager

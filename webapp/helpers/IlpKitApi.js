@@ -1,4 +1,5 @@
 'use strict'
+const TAG = newTAG('IlpKitApi')
 const uuid = require('uuid/v4')
 const request = require('request')
 
@@ -6,6 +7,7 @@ const request = require('request')
 process.env.DEBUG && require('request-debug')(request);
 
 const HTTPS           = 'https://'
+const PIPRS_URL       = 'http://localhost:6666/'
 const DOMAIN          = 'https://best-ilp.herokuapp.com'
 const ILPKIT_INFO     = '/api/parse/destination?destination='
 const ILPKIT_QUOTE    = '/api/payments/quote'
@@ -25,7 +27,9 @@ IlpKitApi.getAccountInfo = (account, next) => {
     try {
       let info = JSON.parse(body)
       return next(null, info)
-    } catch(e){}
+    } catch(e){
+      console.log('failed getAccountInfo: ', e)
+    }
 
     next('Failed to parse user information from ilp kit')
   })
@@ -41,6 +45,7 @@ IlpKitApi.makePayment = function (account, password, destination, sourceAmount, 
     sendImmediately: true,
   }
   
+  console.log(TAG, 'Getting Quote')
   // Make Quote
   request({
     method: 'POST',
@@ -52,6 +57,7 @@ IlpKitApi.makePayment = function (account, password, destination, sourceAmount, 
       destinationAmount: null,
     }
   }, (err, response, body) => {
+    console.log(TAG, 'Err', err)
     if (err)
       return next(err)
 
@@ -60,6 +66,7 @@ IlpKitApi.makePayment = function (account, password, destination, sourceAmount, 
 
     let destinationAmount = body.destinationAmount
   
+    console.log(TAG, 'Transfer..')
     // Make Transfer
     request({
       method: 'PUT',
@@ -72,15 +79,43 @@ IlpKitApi.makePayment = function (account, password, destination, sourceAmount, 
         message: "Paid with TapFi @ Honest Shop",
       }
     }, (err, response, body) => {
+      console.log(TAG, 'Err', err)
       if (err)
         return next(err)
 
       if (response.statusCode != 200)
         return next(body.message || 'Failed to fulfill the payment: ' + response.statusCode)
 
+      console.log(TAG, 'Transfered!')
       next()
     })
 
+  });
+}
+
+IlpKitApi.makePaymentSignature = function (ipr, signature, key, next) {
+  let urlPay   = PIPRS_URL + '/payments'
+  
+  console.log(TAG, 'Pull payment')
+  // Make Quote
+  request({
+    method: 'POST',
+    url: urlPay,
+    auth,
+    data: {
+      ipr: ipr.toString('base64'),
+      key: key.toString('base64'),
+      signature: signature.toString('base64'),
+    }
+  }, (err, response, body) => {
+    console.log(TAG, 'Err', err)
+    if (err)
+      return next(err)
+
+    if (response.statusCode != 200)
+      return next(body.message || 'Failed to send payment')
+
+    next()
   });
 }
 

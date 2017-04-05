@@ -24,7 +24,7 @@ module.exports = function readLongCharacteristic(charac, next) {
 
   // Listen to new data and pushes to array. On "empty", concat buffer and callback
   charac.on('data', function (data){
-    // console.log(data)
+    console.log(data)
     if (data.length == 0){
       charac.unsubscribe()
 
