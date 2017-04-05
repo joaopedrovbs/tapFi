@@ -15,6 +15,37 @@
 
 #define TAPFI_DEBUG
 
+// Hardware pins of the Beacon Board
+#define LED_R 16
+#define LED_G 12
+#define LED_B 15
+#define RUMBLE 20
+#define SW1 8
+#define SW2 18
+
+// Max size for transfer 
+#define CHARACTERISTIC_MAX_SIZE 20
+
+// Timeouts
+#define CONNECTION_TIMEOUT 15000  //Timeout for connection  
+#define PASSWORDENTER_TIMEOUT 5000  //Timeout for password  
+#define PASSWORDTYPE_TIMEOUT 3000  //Timeout for password  
+#define TAP_TIMEOUT 1200   //Timeout for Taps
+
+// Set Device Data
+const unsigned char manufacturerData[6] = {0x52, 0x69, 0x70, 0x70, 0x6c, 0x65}; 
+const char * name = "admin";
+const char * domain = "john.jpvbs.com";
+const char * deviceName = "Joao Pedro";
+
+// Tap Parameters
+unsigned short xThresh = 200;   // Set z-axis tap thresh to 200 mg/ms
+unsigned short yThresh = 200;   // Set z-axis tap thresh to 200 mg/ms
+unsigned short zThresh = 180;   // Set z-axis tap thresh to 180 mg/ms
+unsigned char taps = 1;         // Set minimum taps to 1
+unsigned short tapTime = 100;   // Set tap time to 100ms
+unsigned short tapMulti = 100; // Set multi-tap time to 1s
+
 // Stored Double Tap Timing
 int doubleTap[] = {
   0,
@@ -30,36 +61,17 @@ int password[] = {
   300
 };
 
-// Hardware pins of the Beacon Board
-#define LED_R 16
-#define LED_G 12
-#define LED_B 15
-#define RUMBLE 20
-#define SW1 8
-#define SW2 18
-
-// Timeouts
-#define CONNECTION_TIMEOUT 15000  //Timeout for connection  
-#define PASSWORDENTER_TIMEOUT 5000  //Timeout for password  
-#define PASSWORDTYPE_TIMEOUT 3000  //Timeout for password  
-#define TAP_TIMEOUT 1200   //Timeout for Taps
-
-#define CHARACTERISTIC_MAX_SIZE 20
-
-// Set Ripple as Manufacturer Data
-const unsigned char manufacturerData[6] = {0x52, 0x69, 0x70, 0x70, 0x6c, 0x65}; 
-const char * name = "admin";
-const char * domain = "john.jpvbs.com";
-
-//Crypto libraries
+//Crypto variables
 unsigned char public_key[32], seed[32], signature[64], private_key[64];
 
 // Flags for toggling the system
 bool tapfiOn = true;
 
-// Longs for Timeout and Debouncing
-unsigned long timeConnected = 0;   
+// Longs for Timeout
 unsigned long timeOn = 0;
+unsigned long timeConnected = 0;   
+// Tap Timing
+unsigned long totalTime = 0;
 
 // Create IMU Instance
 MPU9250_DMP imu;
@@ -71,11 +83,11 @@ BLEPeripheral tapfi = BLEPeripheral();
 BLEService service = BLEService("1823");
 
 // Create The characteristics
-BLECharacteristic cName = BLECharacteristic("fff1", BLEBroadcast | BLERead /*| BLEWrite*/, name);
-BLECharacteristic cDomain = BLECharacteristic("aaa1", BLEBroadcast | BLERead /*| BLEWrite*/, domain);
+BLECharacteristic cName = BLECharacteristic("fff1", BLERead /*| BLEWrite*/, name);
+BLECharacteristic cDomain = BLECharacteristic("aaa1", BLERead /*| BLEWrite*/, domain);
 BLECharacteristic cAmount = BLECharacteristic("bbb1", BLEWrite, 20);
-BLECharacteristic cSignature = BLECharacteristic("ccc2", BLERead | BLENotify | BLEIndicate | BLEBroadcast, 20);
- 
+BLECharacteristic cSignature = BLECharacteristic("ccc1", BLERead | BLENotify | BLEIndicate , 20);
+
 // Create one or more descriptors
 BLEDescriptor dName = BLEDescriptor("2901", "name");
 BLEDescriptor dDomain = BLEDescriptor("2901", "domain");
@@ -99,12 +111,12 @@ void userAlert(short rep, short duration_ms, bool motor = true, bool r = false, 
   RGB();
   for(int a = 0; a < rep; a++){
     if (motor){
-      digitalWrite(RUMBLE, HIGH);
+      //digitalWrite(RUMBLE, HIGH);
     }
     RGB(r, g, b);
     delay(duration_ms);
     if (motor){
-      digitalWrite(RUMBLE, LOW);
+      //digitalWrite(RUMBLE, LOW);
     }
     RGB();
     delay(duration_ms);
@@ -178,6 +190,21 @@ bool tapped(){
   return false;
 }
 
+// Load Saved Tap Pattern
+void loadTap(){ 
+  for (unsigned int i = 0 ; i < sizeof(doubleTap) / sizeof(int) ; i++) {
+    SymbolInput symb;
+    
+    // Increment start time
+    totalTime += doubleTap[i];
+
+    symb.type = TAP;
+    symb.start = totalTime;
+
+    tapPattern.addSymbol(symb);
+  }
+ } 
+
 // Read the tap entered and store it in a password sequence
 void readTap(void){
   unsigned long lastTap = millis();
@@ -214,22 +241,45 @@ bool didDoubleTap(){
 
   // Compare passwords
   float thrust = MatchSequence(&tapPattern, &tapDone, params);
-  
+
   // Check thrust
   #ifdef TAPFI_DEBUG
-  Serial.print("Thrust: \033[34m");
-  Serial.print(thrust);
-  Serial.println("\033[0m");
+    Serial.print("Thrust: \033[34m");
+    Serial.print(thrust);
+    Serial.println("\033[0m");
   #endif
+
   // Convert Thrust Values to Boolean
   if (thrust > 0.7) {
     return true;
-  } else {
+  } 
+  else {
     return false;
   }
+
 }
 
+// Load Saved Password 
+  void loadPassword(){
+  #ifdef TAPFI_DEBUG
+    Serial.print("Password Size: ");
+    Serial.println(sizeof(password)/ sizeof(int));
+  #endif
+  
+  totalTime = 0;
+  
+  for (unsigned int i = 0 ; i < sizeof(password) / sizeof(int) ; i++) {
+    SymbolInput symb;
+    
+    // Increment start time
+    totalTime += password[i];
 
+    symb.type = TAP;
+    symb.start = totalTime;
+
+    passwordSaved.addSymbol(symb);
+  }
+}
 // Read the taps and store them in a PasswordSequence
 void readPassword(void){
   unsigned long lastTap = millis();
@@ -264,11 +314,13 @@ bool didPassword(){
   params.tapDurationThrustFactor  = 0.1; //  ↑  will decrease 10% of total thrust
   // Compare passwords
   float thrust = MatchSequence(&passwordSaved, &passwordEntered, params);
+ 
   #ifdef TAPFI_DEBUG
-  Serial.print("Password Thrust: \033[34m");
-  Serial.print(thrust);
-  Serial.println("\033[0m");
+    Serial.print("Password Thrust: \033[34m");
+    Serial.print(thrust);
+    Serial.println("\033[0m");
   #endif
+ 
   //  Converts trust to boolean
   if (thrust > 0.7) {
     return true;
@@ -284,14 +336,14 @@ bool passwordCheck(int retries){
   for(int s=0; s < retries; s++){
     RGB();
     #ifdef TAPFI_DEBUG
-    Serial.println("Try Password");
+      Serial.println("Try Password");
     #endif
     RGB(1,1,1);
     readPassword();
     if(didPassword()){
       RGB();
       #ifdef TAPFI_DEBUG
-      Serial.println("Password OK");
+        Serial.println("Password OK");
       #endif
       userAlert(1,500,1,0,1,0);
       return true;
@@ -305,17 +357,31 @@ bool passwordCheck(int retries){
   return false;
 }
 
-void longWrite(){
+void signatureWrite(){
   cSignature.setValue(signature+0, CHARACTERISTIC_MAX_SIZE);
+  delay(50);
   cSignature.setValue(signature+20, CHARACTERISTIC_MAX_SIZE);
+  delay(50);
   cSignature.setValue(signature+40, CHARACTERISTIC_MAX_SIZE);
+  delay(50);
   cSignature.setValue(signature+60,4);
+  delay(50);
+  cSignature.setValue(public_key, CHARACTERISTIC_MAX_SIZE);
+  delay(50);
+  cSignature.setValue(public_key+20, 12);
+  delay(50);
   cSignature.setValue("");
   #ifdef TAPFI_DEBUG
     Serial.println("Signature Written!");
   #endif
 }
 
+// void signatureErase(){
+//   cSignature.setValue("");
+//   #ifdef TAPFI_DEBUG
+//     Serial.println("Signature Erased!");
+//   #endif
+// }
 
 void generateKeys(void){
   ed25519_create_seed(seed);
@@ -337,8 +403,6 @@ void sign(){
   const int message_len = sizeof(message);
   ed25519_sign(signature, message, message_len, public_key, private_key);
   #ifdef TAPFI_DEBUG
-  //   Serial.print("Message: ");
-  //   Serial.println(message);
     Serial.print("Message Size: ");
     Serial.println(sizeof(message));
     Serial.print("Signature: ");
@@ -355,8 +419,27 @@ void sign(){
     }
     Serial.println();
   #endif
-
 }
+
+//Check for connection from Central, do value checking and exchange 
+void onConnect(){
+ BLECentral central = tapfi.central();
+  if(central){
+    timeConnected=millis();
+    while (central.connected() && millis() - timeConnected < CONNECTION_TIMEOUT) { 
+      if(cAmount.written()){
+        Serial.println("Amount Written!");
+        if(passwordCheck(3)){
+          sign();
+          signatureWrite();
+          break;
+        }
+      }
+    }
+  }
+}
+
+//////////////////////////////////// SETUP BEGIN ///////////////////////////////////// 
 
 void setup() {
   // Serial Initialization
@@ -384,8 +467,8 @@ void setup() {
   tapfi.setConnectable(true);
   tapfi.setAppearance(0x0080);
   tapfi.setTxPower(-30);
-  tapfi.setLocalName("João Pedro"); 
-  tapfi.setDeviceName("João Pedro");
+  tapfi.setLocalName(deviceName); 
+  tapfi.setDeviceName(deviceName);
   tapfi.setManufacturerData(manufacturerData, manufacturerData[6]);
   
   //Interval in ms
@@ -409,43 +492,16 @@ void setup() {
   tapfi.addAttribute(cSignature);
   tapfi.addAttribute(dSignature);
 
-
   //Starts the radio and the device
   tapfi.begin();
+  
   #ifdef TAPFI_DEBUG
     Serial.println("TapFi Begin");
   #endif
-    generateKeys();
-  // Load Saved Tap Pattern
-  unsigned long totalTime = 0;
-  for (unsigned int i = 0 ; i < sizeof(doubleTap) / sizeof(int) ; i++) {
-    SymbolInput symb;
-    
-    // Increment start time
-    totalTime += doubleTap[i];
-
-    symb.type = TAP;
-    symb.start = totalTime;
-
-    tapPattern.addSymbol(symb);
-  }
-  #ifdef TAPFI_DEBUG
-    Serial.print("Password Size: ");
-    Serial.println(sizeof(password)/ sizeof(int));
-  #endif
-  // Load Saved Password 
-  totalTime = 0;
-  for (unsigned int i = 0 ; i < sizeof(password) / sizeof(int) ; i++) {
-    SymbolInput symb;
-    
-    // Increment start time
-    totalTime += password[i];
-
-    symb.type = TAP;
-    symb.start = totalTime;
-
-    passwordSaved.addSymbol(symb);
-  }
+  
+  generateKeys();
+  loadTap();
+  loadPassword();
 
   // Start IMU
   if (code = imu.begin())
@@ -453,33 +509,32 @@ void setup() {
   // Enables Tap Recognition at 200hz
   if (code = imu.dmpBegin(DMP_FEATURE_TAP, 200))
     haltError(2, code);
-
-  // Tap Parameters
-  unsigned short zThresh = 180;   // Set z-axis tap thresh to 100 mg/ms
-  unsigned char taps = 1;         // Set minimum taps to 1
-  unsigned short tapTime = 100;   // Set tap time to 100ms
-  unsigned short tapMulti = 100; // Set multi-tap time to 1s
   
   // Initializes Tap with Parameters
-  if(code = imu.dmpSetTap(200, 200, zThresh, taps, tapTime, tapMulti))
+  if(code = imu.dmpSetTap(xThresh, yThresh, zThresh, taps, tapTime, tapMulti))
     haltError(3, code);
   #ifdef TAPFI_DEBUG
     Serial.println("Imu Begin");
   #endif
 } // End Setup
 
+//////////////////////////////////// LOOP BEGIN ///////////////////////////////////// 
+
 void loop() {
-  //
   if(tapfiOn){
     RGB(1,0,0);
     #ifdef TAPFI_DEBUG
       Serial.println("BLE Should be OFF");
     #endif
+    //keyErase();
+    //signatureErase();
     tapfi.disconnect();
     tapfiOn=false;
   }
+
   // Read taps and record them to check
   readTap();
+  
   //Check if there was a double-tap event
   if(didDoubleTap()){
     RGB();
@@ -494,24 +549,6 @@ void loop() {
     // Awaits for connection with a certain TIMEOUT
     while(millis() - timeOn < CONNECTION_TIMEOUT){
       onConnect();
-    }
-  }
-}
-
-//Check for connection from Central, do value checking and exchange 
-void onConnect(){
- BLECentral central = tapfi.central();
-  if(central){
-    timeConnected=millis();
-    while (central.connected() && millis() - timeConnected < CONNECTION_TIMEOUT) { 
-      if(cAmount.written()){
-        Serial.println("Amount Written!");
-        if(passwordCheck(3)){
-          sign();
-          longWrite();
-          break;
-        }
-      }
     }
   }
 }
