@@ -12,6 +12,12 @@ This contains all source files and project specs for tapFi project, including:
 
 Each part is in it's own separate folder. `webapp`, `firmware`, `project` and `tapfi-api`.
 
+## How to use it
+
+- For flashing the `firmware` into the board visit [here](https://github.com/joaopedrovbs/tapFi/tree/master/firmware). 
+- To assemble your a device like tapFi, see [here](https://github.com/joaopedrovbs/tapFi/tree/master/hardware).
+- To run the Point of Sale created for interfacing with tapFi see [here](https://github.com/joaopedrovbs/tapFi/tree/master/webapp).
+
 ## Security
 
 Read about security in [SECURITY.md](SECURITY.md)
@@ -133,6 +139,8 @@ Nordic has a very good documentation, and C libraries for it's devices, the prob
 ## Credits
 
 [Ivan Seidel Gomes](https://github.com/ivanseidel)
+
 [João Pedro Vilas](https://github.com/joaopedrovbs)
+
 [Evan Schwartz](https://github.com/emschwartz)
 
