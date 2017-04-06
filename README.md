@@ -15,8 +15,8 @@ Each part is in it's own separate folder. `webapp`, `firmware`, `project` and `t
 ## How to use it
 
 - For flashing the `firmware` into the board visit [here](https://github.com/joaopedrovbs/tapFi/tree/master/firmware). 
-- To assemble your a device like tapFi, see [here](https://github.com/joaopedrovbs/tapFi/tree/master/hardware).
-- To run the Point of Sale created for interfacing with tapFi see [here](https://github.com/joaopedrovbs/tapFi/tree/master/webapp).
+- To assemble a device like the `prototype tapFi`, see [here](https://github.com/joaopedrovbs/tapFi/tree/master/hardware).
+- To run the `Point of Sale created for interfacing with tapFi see [here](https://github.com/joaopedrovbs/tapFi/tree/master/webapp).
 
 ## Security
 
