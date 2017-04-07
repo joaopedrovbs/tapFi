@@ -1,4 +1,5 @@
-# The tapFi project
+![TapFi Banner](media/banner.png)
+> The tapFi project
 
 This contains all source files and project specs for tapFi project, including:
 
